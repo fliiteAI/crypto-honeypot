@@ -4,7 +4,7 @@ A defensive crypto wallet honeypot system for detecting attackers targeting cryp
 
 ## Overview
 
-This tool generates realistic-looking (but non-funded) cryptocurrency wallet artifacts and deploys them across monitored endpoints. When an attacker -- whether an infostealer malware or a manual intruder -- accesses these honeypot files, Wazuh detects the activity and fires high-fidelity alerts with zero false positives.
+This tool generates realistic-looking (but non-funded) cryptocurrency wallet artifacts and deploys them across monitored endpoints. When an attacker whether an infostealer, malware or a manual intruder, accesses these honeypot files, Wazuh detects the activity and fires high-fidelity alerts with zero false positives.
 
 ### Detection Layers
 
@@ -17,13 +17,13 @@ This tool generates realistic-looking (but non-funded) cryptocurrency wallet art
 
 ### Supported Chains
 
-- **Bitcoin (BTC)** -- `wallet.dat` (Berkeley DB format)
-- **Ethereum (ETH/EVM)** -- Keystore files (UTC/JSON), `.env` private keys
-- **Solana (SOL)** -- `id.json` CLI keypair files
-- **XRP (Ripple)** -- Wallet export JSON
-- **Cardano (ADA)** -- `.skey` signing key (TextEnvelope format)
-- **Canary Seed Phrases** -- BIP-39 mnemonics in various file formats
-- **Browser Extensions** -- MetaMask, Phantom, Exodus, Electrum decoy data
+- **Bitcoin (BTC)**  `wallet.dat` (Berkeley DB format)
+- **Ethereum (ETH/EVM)**  Keystore files (UTC/JSON), `.env` private keys
+- **Solana (SOL)**  `id.json` CLI keypair files
+- **XRP (Ripple)**  Wallet export JSON
+- **Cardano (ADA)**  `.skey` signing key (TextEnvelope format)
+- **Canary Seed Phrases**  BIP-39 mnemonics in various file formats
+- **Browser Extensions**  MetaMask, Phantom, Exodus, Electrum decoy data
 
 ## Installation
 
