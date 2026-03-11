@@ -1,0 +1,67 @@
+# Honeypot Deployer - Linux Audit Rules
+#
+# Install to: /etc/audit/rules.d/honeypot.rules
+# Then reload: sudo auditctl -R /etc/audit/rules.d/honeypot.rules
+#
+# NOTE: Replace USER with the actual username on the target endpoint.
+# These rules complement Wazuh FIM by providing process-level visibility
+# into who is accessing honeypot wallet artifacts.
+
+# ============================================
+# Bitcoin Core wallet files
+# ============================================
+-w /home/USER/.bitcoin/wallets/wallet.dat -p rwa -k honeypot_btc_wallet
+
+# ============================================
+# Ethereum keystore files
+# ============================================
+-w /home/USER/.ethereum/keystore/ -p rwa -k honeypot_eth_keystore
+
+# ============================================
+# Solana CLI wallet
+# ============================================
+-w /home/USER/.config/solana/id.json -p rwa -k honeypot_sol_wallet
+
+# ============================================
+# Cardano signing key
+# ============================================
+-w /home/USER/.cardano/payment.skey -p rwa -k honeypot_ada_wallet
+
+# ============================================
+# XRP wallet export
+# ============================================
+-w /home/USER/Documents/xrp-wallet-backup.json -p rwa -k honeypot_xrp_wallet
+
+# ============================================
+# Electrum wallet
+# ============================================
+-w /home/USER/.electrum/wallets/ -p rwa -k honeypot_electrum
+
+# ============================================
+# Exodus wallet
+# ============================================
+-w /home/USER/.config/Exodus/exodus.wallet/ -p rwa -k honeypot_exodus
+
+# ============================================
+# Canary seed phrase files
+# ============================================
+-w /home/USER/Documents/seed-backup.txt -p rwa -k honeypot_seed_file
+-w /home/USER/Desktop/crypto-recovery.txt -p rwa -k honeypot_seed_file
+-w /home/USER/.config/.seed_phrase -p rwa -k honeypot_seed_file
+-w /home/USER/notes.txt -p rwa -k honeypot_seed_file
+-w /home/USER/Documents/wallet-backup.json -p rwa -k honeypot_seed_file
+
+# ============================================
+# Developer .env files (leaked keys)
+# ============================================
+-w /home/USER/projects/defi-bot/.env -p rwa -k honeypot_eth_keystore
+
+# ============================================
+# Browser extension data (Chrome - MetaMask)
+# ============================================
+-w /home/USER/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/ -p rwa -k honeypot_metamask
+
+# ============================================
+# Browser extension data (Chrome - Phantom)
+# ============================================
+-w /home/USER/.config/google-chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/ -p rwa -k honeypot_phantom

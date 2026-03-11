@@ -1,0 +1,57 @@
+<!--
+  Honeypot Deployer - Custom Wazuh Decoders
+
+  Install to: /var/ossec/etc/decoders/honeypot_decoder.xml
+
+  These decoders parse logs from:
+  1. Chain Monitor service (JSON format)
+  2. Honeypot Deployer agent (structured text)
+  3. Forensic snapshot script output
+-->
+
+<!-- ============================================ -->
+<!-- Chain Monitor Service Decoders               -->
+<!-- ============================================ -->
+
+<!-- Parent decoder: matches chain-monitor program name -->
+<decoder name="chain-monitor">
+  <program_name>chain-monitor</program_name>
+</decoder>
+
+<!-- Child decoder: parse JSON payload from chain monitor -->
+<decoder name="chain-monitor-json">
+  <parent>chain-monitor</parent>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<!-- ============================================ -->
+<!-- Honeypot Deployer Agent Decoders             -->
+<!-- ============================================ -->
+
+<!-- Parent decoder: matches honeypot-deployer program name -->
+<decoder name="honeypot-deployer">
+  <program_name>honeypot-deployer</program_name>
+</decoder>
+
+<!-- Child decoder: parse structured deployment/health-check logs -->
+<decoder name="honeypot-deployer-fields">
+  <parent>honeypot-deployer</parent>
+  <regex>action=(\S+) chain=(\S+) path=(\S+) status=(\S+)</regex>
+  <order>action, chain, file_path, status</order>
+</decoder>
+
+<!-- ============================================ -->
+<!-- Forensic Snapshot Script Decoders            -->
+<!-- ============================================ -->
+
+<!-- Parent decoder: matches honeypot-forensics program name -->
+<decoder name="honeypot-forensics">
+  <program_name>honeypot-forensics</program_name>
+</decoder>
+
+<!-- Child decoder: parse forensic snapshot output -->
+<decoder name="honeypot-forensics-fields">
+  <parent>honeypot-forensics</parent>
+  <regex>snapshot_id=(\S+) alert_id=(\S+) pid=(\d+) user=(\S+) process=(\S+)</regex>
+  <order>snapshot_id, alert_id, pid, user, process_name</order>
+</decoder>
