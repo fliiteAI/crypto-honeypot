@@ -47,6 +47,9 @@ Run the provided `deploy.ps1` PowerShell script on the Windows endpoints you wis
 .\deploy.ps1
 ```
 
+#### Docker
+An example containerized deployment is available in the `docker-example/` directory.
+
 ### 2. Configure Wazuh Agent
 
 #### Enable Who-Data (Linux)

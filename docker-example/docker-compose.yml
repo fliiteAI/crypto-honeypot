@@ -1,0 +1,14 @@
+services:
+  crypto-honey-node:
+    build:
+      context: ..
+      dockerfile: docker-example/Dockerfile
+    container_name: crypto-honey-node
+    restart: unless-stopped
+    # If using Wazuh agent in the same network or host mode
+    # networks:
+    #   - wazuh-network
+
+# networks:
+#   wazuh-network:
+#     external: true
