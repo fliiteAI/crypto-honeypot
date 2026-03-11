@@ -2,7 +2,7 @@
   <!-- Rule for Bitcoin wallet access -->
   <rule id="100500" level="12">
     <if_sid>550,554,553</if_sid>
-    <field name="syscheck.path">\.bitcoin/wallet\.dat$</field>
+    <field name="syscheck.path">\.bitcoin/wallet\.dat$|Bitcoin/wallet\.dat$</field>
     <description>Crypto Honeypot: Access or modification detected in Bitcoin wallet.dat</description>
     <mitre>
       <id>T1552.004</id>
@@ -12,7 +12,7 @@
   <!-- Rule for Ethereum keystore access -->
   <rule id="100501" level="12">
     <if_sid>550,554,553</if_sid>
-    <field name="syscheck.path">\.ethereum/keystore/UTC--</field>
+    <field name="syscheck.path">\.ethereum/keystore/UTC--|Ethereum/keystore/UTC--</field>
     <description>Crypto Honeypot: Access or modification detected in Ethereum keystore file</description>
     <mitre>
       <id>T1552.004</id>
@@ -32,8 +32,28 @@
   <!-- Rule for Electrum wallet access -->
   <rule id="100503" level="12">
     <if_sid>550,554,553</if_sid>
-    <field name="syscheck.path">\.electrum/wallets/default_wallet$</field>
+    <field name="syscheck.path">\.electrum/wallets/default_wallet$|Electrum/wallets/default_wallet$</field>
     <description>Crypto Honeypot: Access or modification detected in Electrum wallet</description>
+    <mitre>
+      <id>T1552.004</id>
+    </mitre>
+  </rule>
+
+  <!-- Rule for Exodus wallet access -->
+  <rule id="100504" level="12">
+    <if_sid>550,554,553</if_sid>
+    <field name="syscheck.path">Exodus/exodus\.wallet/seed\.secur$</field>
+    <description>Crypto Honeypot: Access or modification detected in Exodus wallet dummy</description>
+    <mitre>
+      <id>T1552.004</id>
+    </mitre>
+  </rule>
+
+  <!-- Rule for MetaMask vault access -->
+  <rule id="100505" level="12">
+    <if_sid>550,554,553</if_sid>
+    <field name="syscheck.path">nkbihfbeogaeaoehlefnkodbefgpgknn/000003\.log$</field>
+    <description>Crypto Honeypot: Access or modification detected in MetaMask vault file</description>
     <mitre>
       <id>T1552.004</id>
     </mitre>
