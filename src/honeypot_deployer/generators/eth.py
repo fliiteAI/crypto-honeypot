@@ -33,7 +33,7 @@ def create_keystore_artifact(
     Uses the standard Web3 keystore format with a deliberately weak password
     to make it tempting for attackers.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Use standard eth-account keystore encryption
     keystore = Account.encrypt(keypair.private_key_hex, password)
@@ -56,7 +56,7 @@ def create_dotenv_artifact(keypair: ETHKeypair, output_path: Path) -> Path:
     Simulates a developer environment with an exposed private key --- a common
     target for attackers scanning for leaked credentials.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     env_file = output_path / ".env"
     env_content = f"""# Ethereum development configuration

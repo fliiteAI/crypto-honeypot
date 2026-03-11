@@ -1,0 +1,15 @@
+<syscheck>
+  <!-- Crypto Wallet Honeypot Monitoring -->
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/root/.bitcoin</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/root/.ethereum/keystore</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/root/.config/solana</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/root/.electrum/wallets</directories>
+
+  <!-- If deploying to a specific user instead of root, update the paths accordingly -->
+  <!--
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/user/.bitcoin</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/user/.ethereum/keystore</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/user/.config/solana</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/user/.electrum/wallets</directories>
+  -->
+</syscheck>

@@ -1,10 +1,10 @@
 <!--
   Honeypot Deployer - Custom Wazuh Alert Rules
-
+  
   Install to: /var/ossec/etc/rules/honeypot_rules.xml
-
+  
   Rule ID range: 100500 - 100599 (reserved for honeypot)
-
+  
   Detection Layers:
     Layer 1 (100500-100509): File Access Detection (FIM-based)
     Layer 2 (100510-100519): Process & Command Auditing

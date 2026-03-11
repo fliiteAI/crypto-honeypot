@@ -1,8 +1,8 @@
 <!--
   Honeypot Deployer - Custom Wazuh Decoders
-
+  
   Install to: /var/ossec/etc/decoders/honeypot_decoder.xml
-
+  
   These decoders parse logs from:
   1. Chain Monitor service (JSON format)
   2. Honeypot Deployer agent (structured text)

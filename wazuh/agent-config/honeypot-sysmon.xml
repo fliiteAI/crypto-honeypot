@@ -1,13 +1,13 @@
 <!--
   Honeypot Deployer - Windows Sysmon Configuration
-
+  
   This configuration should be merged with your existing Sysmon config.
   It monitors access to honeypot wallet artifacts on Windows endpoints.
-
+  
   Prerequisites:
   - Sysmon installed (https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)
   - Wazuh agent configured to collect Sysmon events
-
+  
   NOTE: Replace USER with the actual Windows username.
 -->
 

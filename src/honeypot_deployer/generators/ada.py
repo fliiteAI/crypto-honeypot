@@ -47,7 +47,7 @@ def create_skey_artifact(keypair: ADAKeypair, output_path: Path) -> Path:
 
     Uses the standard TextEnvelope JSON format that cardano-cli produces.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     skey_file = output_path / "payment.skey"
     skey_data = {
@@ -64,7 +64,7 @@ def create_skey_artifact(keypair: ADAKeypair, output_path: Path) -> Path:
 
 def create_vkey_artifact(keypair: ADAKeypair, output_path: Path) -> Path:
     """Create a Cardano verification key (.vkey) file."""
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     vkey_file = output_path / "payment.vkey"
     vkey_data = {

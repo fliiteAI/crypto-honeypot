@@ -91,7 +91,7 @@ def create_wallet_export_artifact(keypair: XRPKeypair, output_path: Path) -> Pat
 
     Mimics the format exported by popular XRP wallets like XUMM/Xaman.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     wallet_file = output_path / "xrp-wallet-backup.json"
     wallet_data = {

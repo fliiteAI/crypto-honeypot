@@ -48,7 +48,7 @@ def create_seed_txt_artifact(bundle: SeedPhraseBundle, output_path: Path) -> Pat
 
     Looks like a user's hand-typed seed phrase backup.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     seed_file = output_path / "seed-backup.txt"
     words = bundle.mnemonic.split()
@@ -81,7 +81,7 @@ def create_hidden_seed_artifact(bundle: SeedPhraseBundle, output_path: Path) -> 
 
     Simulates a tech-savvy user hiding their seed in a config directory.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     hidden_file = output_path / ".seed_phrase"
     content = f"""# wallet recovery - {time.strftime("%Y-%m-%d")}
@@ -98,7 +98,7 @@ def create_notes_artifact(bundle: SeedPhraseBundle, output_path: Path) -> Path:
 
     Simulates a user who jotted down their seed phrase in a general notes file.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     notes_file = output_path / "notes.txt"
     content = f"""Shopping list:
@@ -128,7 +128,7 @@ def create_json_backup_artifact(bundle: SeedPhraseBundle, output_path: Path) -> 
 
     Mimics automated wallet backup exports.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     backup_file = output_path / "wallet-backup.json"
     backup_data = {
