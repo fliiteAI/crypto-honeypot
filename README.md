@@ -93,21 +93,26 @@ To automatically disable user accounts that interact with the honeypot, add the 
 
 This configuration will trigger the `disable-account` script for 30 minutes whenever a rule in the `crypto_honeypot` group is fired.
 
-## Testing the Honeypot
+## Testing & Validation
 
-To test the integration, attempt to modify or delete one of the honeyfiles:
+To validate the honeypot end-to-end, you can use the provided validation scripts which simulate common attacker behaviors (reading, modifying, and deleting files).
 
-### Linux
+### Linux Validation
 ```bash
-echo "tamper" >> ~/.bitcoin/wallet.dat
+chmod +x tests/validate_honeypot.sh
+./tests/validate_honeypot.sh
 ```
 
-### Windows
+### Windows Validation
 ```powershell
-Add-Content -Path "$env:APPDATA\Bitcoin\wallet.dat" -Value "tamper"
+.\tests\validate_honeypot.ps1
 ```
 
-You should see an alert in your Wazuh dashboard with **Level 12** and a description matching the modified wallet. If Auditd rules are configured, simple read operations will also trigger alerts.
+Check your Wazuh dashboard for alerts with **Level 12** and the tag `crypto_honeypot`.
+
+## Advanced: On-Chain Monitoring
+
+For high-fidelity confirmation of credential theft, you can use "real" on-chain bait addresses. Refer to [ON_CHAIN_MONITORING.md](ON_CHAIN_MONITORING.md) for a guide on establishing and monitoring these addresses.
 
 ## SIEM Integration
 
