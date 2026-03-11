@@ -16,6 +16,7 @@ The honeypot creates dummy cryptocurrency wallet files and browser extension dat
 - Ethereum: `~/.ethereum/keystore/UTC--...`
 - Solana: `~/.config/solana/id.json`
 - Electrum: `~/.electrum/wallets/default_wallet`
+- Exodus: `~/.config/Exodus/exodus.wallet/seed.secur`
 - Extensions: `~/.config/[browser]/Default/Local Extension Settings/[extension_id]`
 
 ### Monitored Paths (Windows)

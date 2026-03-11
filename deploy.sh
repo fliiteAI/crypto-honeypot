@@ -13,6 +13,9 @@ SOLANA_WALLET="$SOLANA_DIR/id.json"
 ELECTRUM_DIR="$HOME/.electrum/wallets"
 ELECTRUM_WALLET="$ELECTRUM_DIR/default_wallet"
 
+EXODUS_DIR="$HOME/.config/Exodus/exodus.wallet"
+EXODUS_DUMMY="$EXODUS_DIR/seed.secur"
+
 # Browser Extension IDs
 METAMASK_ID="nkbihfbeogaeaoehlefnkodbefgpgknn"
 PHANTOM_ID="bfnaelmomeimhlpmgjnjophhpkkoljpa"
@@ -29,14 +32,16 @@ mkdir -p "$BITCOIN_DIR"
 mkdir -p "$ETHEREUM_DIR"
 mkdir -p "$SOLANA_DIR"
 mkdir -p "$ELECTRUM_DIR"
+mkdir -p "$EXODUS_DIR"
 
 chmod 700 "$BITCOIN_DIR"
 chmod 700 "$HOME/.ethereum" 2>/dev/null
 chmod 700 "$ETHEREUM_DIR"
-chmod 700 "$HOME/.config" 2>/dev/null
 chmod 700 "$SOLANA_DIR"
 chmod 700 "$HOME/.electrum" 2>/dev/null
 chmod 700 "$ELECTRUM_DIR"
+chmod 700 "$HOME/.config/Exodus" 2>/dev/null
+chmod 700 "$EXODUS_DIR"
 
 # Create Extension Honeyfolders
 for browser in "$CHROME_SETTINGS" "$BRAVE_SETTINGS"; do
@@ -105,10 +110,14 @@ cat <<EOF > "$ELECTRUM_WALLET"
 }
 EOF
 
+# Create Exodus dummy
+echo "DUMMY_SEED_DATA_FOR_HONEYPOT" > "$EXODUS_DUMMY"
+
 # Set file permissions
 chmod 600 "$BITCOIN_WALLET"
 chmod 600 "$ETHEREUM_WALLET"
 chmod 600 "$SOLANA_WALLET"
 chmod 600 "$ELECTRUM_WALLET"
+chmod 600 "$EXODUS_DUMMY"
 
 echo "Linux Honeypot deployment complete."

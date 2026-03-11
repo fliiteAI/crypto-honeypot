@@ -22,7 +22,7 @@
   <!-- Rule for Solana id.json access -->
   <rule id="100502" level="12">
     <if_sid>550,554,553</if_sid>
-    <field name="syscheck.path">\.config[\\/]solana[\\/]id\.json$</field>
+    <field name="syscheck.path">\.config[\\/]solana[\\/]id\.json$|solana[\\/]id\.json$</field>
     <description>Crypto Honeypot: Access or modification detected in Solana id.json</description>
     <mitre>
       <id>T1552.004</id>
