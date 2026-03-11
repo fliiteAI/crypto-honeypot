@@ -1,0 +1,24 @@
+<!--
+  Wazuh Active Response Configuration for Crypto Honeypot
+  Add these snippets to your Wazuh Manager's ossec.conf within the <ossec_config> tag.
+-->
+
+<!-- 1. Automated Account Lockout (Linux) -->
+<active-response>
+  <command>disable-account</command>
+  <location>local</location>
+  <rules_group>crypto_honeypot</rules_group>
+  <timeout>1800</timeout> <!-- Disable for 30 minutes -->
+</active-response>
+
+<!--
+  Optional: Custom Process Kill Response
+  This requires a custom script on the agent.
+-->
+<!--
+<active-response>
+  <command>custom-kill-process</command>
+  <location>local</location>
+  <rules_group>crypto_honeypot</rules_group>
+</active-response>
+-->

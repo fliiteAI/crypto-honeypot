@@ -52,8 +52,18 @@
   <!-- Rule for Browser Extension interaction (MetaMask, Phantom, etc.) -->
   <rule id="100505" level="12">
     <if_sid>550,554,553</if_sid>
-    <field name="syscheck.path">nkbihfbeogaeaoehlefnkodbefgpgknn|bfnaelmomeimhlpmgjnjophhpkkoljpa|ibnejdfjmmkpcnlpebklmnkoeoihofec|hnfanknocfeofbddgcijnmhnfnkdnaad|cadiboklkpojfamcoggejbbdjcoiljjk</field>
+    <field name="syscheck.path">nkbihfbeogaeaoehlefnkodbefgpgknn|bfnaelmomeimhlpmgjnjophhpkkoljpa|ibnejdfjmmkpcnlpebklmnkoeoihofec|hnfanknocfeofbddgcijnmhnfnkdnaad|cadiboklkpojfamcoggejbbdjcoiljjk|moz-extension\+\+\+</field>
     <description>Crypto Honeypot: Access or modification detected in browser extension wallet data</description>
+    <mitre>
+      <id>T1552.004</id>
+    </mitre>
+  </rule>
+
+  <!-- Rule for Read-Access via Auditd (Linux) -->
+  <rule id="100510" level="12">
+    <if_sid>80700</if_sid> <!-- Base Auditd rule -->
+    <field name="audit.key">crypto_honeypot</field>
+    <description>Crypto Honeypot: Read access detected on honeyfile (Auditd)</description>
     <mitre>
       <id>T1552.004</id>
     </mitre>

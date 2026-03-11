@@ -43,7 +43,7 @@ chmod 700 "$ELECTRUM_DIR"
 chmod 700 "$HOME/.config/Exodus" 2>/dev/null
 chmod 700 "$EXODUS_DIR"
 
-# Create Extension Honeyfolders
+# Create Extension Honeyfolders (Chrome/Brave)
 for browser in "$CHROME_SETTINGS" "$BRAVE_SETTINGS"; do
     for ext_id in "$METAMASK_ID" "$PHANTOM_ID" "$TRONLINK_ID" "$COINBASE_ID" "$BINANCE_ID"; do
         ext_path="$browser/$ext_id"
@@ -60,6 +60,21 @@ for browser in "$CHROME_SETTINGS" "$BRAVE_SETTINGS"; do
         chmod 600 "$ext_path/CURRENT"
         chmod 600 "$ext_path/000005.ldb"
     done
+done
+
+# Create Extension Honeyfolders (Firefox - simplified for common extensions)
+# Note: Firefox uses internal UUIDs, so we create generic 'moz-extension+++' folders
+for ff_profile in $HOME/.mozilla/firefox/*.default*; do
+    if [ -d "$ff_profile" ]; then
+        storage_path="$ff_profile/storage/default"
+        mkdir -p "$storage_path"
+        # We create a decoy MetaMask-like storage
+        ext_path="$storage_path/moz-extension+++metamask-honeypot"
+        mkdir -p "$ext_path/idb"
+        echo "{\"vault\":\"fake\"}" > "$ext_path/idb/3647222921wleabcEoxlt-eengsairo.sqlite"
+        chmod 700 "$ext_path"
+        chmod 600 "$ext_path/idb/3647222921wleabcEoxlt-eengsairo.sqlite"
+    fi
 done
 
 # Create Bitcoin honeyfile (Binary-like)

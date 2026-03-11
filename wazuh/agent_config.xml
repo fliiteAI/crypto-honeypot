@@ -12,9 +12,10 @@
   <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.electrum/wallets</directories>
   <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/Exodus/exodus.wallet</directories>
 
-  <!-- Linux Browser Extensions (Chrome/Brave) -->
+  <!-- Linux Browser Extensions (Chrome/Brave/Firefox) -->
   <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/google-chrome/Default/Local Extension Settings/*</directories>
   <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/*</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.mozilla/firefox/*.default*/storage/default/*</directories>
 
   <!-- Windows Crypto Wallet Honeypot Monitoring -->
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Roaming\Bitcoin</directories>
@@ -22,8 +23,19 @@
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Roaming\Electrum\wallets</directories>
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Roaming\Exodus\exodus.wallet</directories>
 
-  <!-- Windows Browser Extensions (Chrome/Edge/Brave) -->
+  <!-- Windows Browser Extensions (Chrome/Edge/Brave/Firefox) -->
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Local\Google\Chrome\User Data\Default\Local Extension Settings\*</directories>
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Local\Microsoft\Edge\User Data\Default\Local Extension Settings\*</directories>
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Local\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\*</directories>
+  <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*.default*\storage\default\*</directories>
 </syscheck>
+
+<!--
+  To detect read-access (cat, grep, etc.) on Linux, Auditd must be configured.
+  Add the following to /var/ossec/etc/ossec.conf on the agent to read audit logs:
+
+  <localfile>
+    <log_format>audit</log_format>
+    <location>/var/log/audit/audit.log</location>
+  </localfile>
+-->

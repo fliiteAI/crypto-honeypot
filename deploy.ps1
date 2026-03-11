@@ -31,13 +31,16 @@ $BROWSER_PATHS = @(
     "$LocalData\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings"
 )
 
+# Firefox storage path (requires profile search)
+$FF_BASE = "$AppData\Mozilla\Firefox\Profiles"
+
 # Create core directories
 New-Item -ItemType Directory -Force -Path $BITCOIN_DIR
 New-Item -ItemType Directory -Force -Path $ETHEREUM_DIR
 New-Item -ItemType Directory -Force -Path $ELECTRUM_DIR
 New-Item -ItemType Directory -Force -Path $EXODUS_DIR
 
-# Create Extension Honeyfolders
+# Create Extension Honeyfolders (Chrome/Edge/Brave)
 foreach ($browserPath in $BROWSER_PATHS) {
     foreach ($extId in $EXT_IDS) {
         $fullPath = Join-Path $browserPath $extId
@@ -46,6 +49,18 @@ foreach ($browserPath in $BROWSER_PATHS) {
         Set-Content -Path (Join-Path $fullPath "MANIFEST-000001") -Value "MANIFEST-000001"
         Set-Content -Path (Join-Path $fullPath "CURRENT") -Value "leveldb.BytewiseComparator"
         New-Item -ItemType File -Force -Path (Join-Path $fullPath "000005.ldb")
+    }
+}
+
+# Create Extension Honeyfolders (Firefox)
+if (Test-Path $FF_BASE) {
+    $profiles = Get-ChildItem -Path $FF_BASE -Directory -Filter "*.default*"
+    foreach ($profile in $profiles) {
+        $storagePath = Join-Path $profile.FullName "storage\default"
+        $extPath = Join-Path $storagePath "moz-extension+++metamask-honeypot"
+        $idbPath = Join-Path $extPath "idb"
+        New-Item -ItemType Directory -Force -Path $idbPath
+        Set-Content -Path (Join-Path $idbPath "3647222921wleabcEoxlt-eengsairo.sqlite") -Value "{\"vault\":\"fake\"}"
     }
 }
 
