@@ -13,19 +13,49 @@ SOLANA_WALLET="$SOLANA_DIR/id.json"
 ELECTRUM_DIR="$HOME/.electrum/wallets"
 ELECTRUM_WALLET="$ELECTRUM_DIR/default_wallet"
 
-# Create directories with restricted permissions
+# Browser Extension IDs
+METAMASK_ID="nkbihfbeogaeaoehlefnkodbefgpgknn"
+PHANTOM_ID="bfnaelmomeimhlpmgjnjophhpkkoljpa"
+TRONLINK_ID="ibnejdfjmmkpcnlpebklmnkoeoihofec"
+COINBASE_ID="hnfanknocfeofbddgcijnmhnfnkdnaad"
+BINANCE_ID="cadiboklkpojfamcoggejbbdjcoiljjk"
+
+# Chrome-based browser paths (Linux)
+CHROME_SETTINGS="$HOME/.config/google-chrome/Default/Local Extension Settings"
+BRAVE_SETTINGS="$HOME/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings"
+
+# Create core directories
 mkdir -p "$BITCOIN_DIR"
 mkdir -p "$ETHEREUM_DIR"
 mkdir -p "$SOLANA_DIR"
 mkdir -p "$ELECTRUM_DIR"
 
 chmod 700 "$BITCOIN_DIR"
-chmod 700 "$HOME/.ethereum"
+chmod 700 "$HOME/.ethereum" 2>/dev/null
 chmod 700 "$ETHEREUM_DIR"
-chmod 700 "$HOME/.config"
+chmod 700 "$HOME/.config" 2>/dev/null
 chmod 700 "$SOLANA_DIR"
-chmod 700 "$HOME/.electrum"
+chmod 700 "$HOME/.electrum" 2>/dev/null
 chmod 700 "$ELECTRUM_DIR"
+
+# Create Extension Honeyfolders
+for browser in "$CHROME_SETTINGS" "$BRAVE_SETTINGS"; do
+    for ext_id in "$METAMASK_ID" "$PHANTOM_ID" "$TRONLINK_ID" "$COINBASE_ID" "$BINANCE_ID"; do
+        ext_path="$browser/$ext_id"
+        mkdir -p "$ext_path"
+        chmod 700 "$ext_path"
+        # Create dummy LevelDB-like files targeted by stealers
+        echo "{\"vault\":\"{\\\"data\\\":\\\"fakevaultdata\\\",\\\"iv\\\":\\\"fakeiv\\\",\\\"salt\\\":\\\"fakesalt\\\"}\"}" > "$ext_path/000003.log"
+        echo "MANIFEST-000001" > "$ext_path/MANIFEST-000001"
+        echo "leveldb.BytewiseComparator" > "$ext_path/CURRENT"
+        touch "$ext_path/000005.ldb"
+
+        chmod 600 "$ext_path/000003.log"
+        chmod 600 "$ext_path/MANIFEST-000001"
+        chmod 600 "$ext_path/CURRENT"
+        chmod 600 "$ext_path/000005.ldb"
+    done
+done
 
 # Create Bitcoin honeyfile (Binary-like)
 echo -ne "\x00\x05\x31\x62\x74\x63\x00\x00\x00\x00\x01\x00\x00\x00\xde\xad\xbe\xef\xca\xfe\xba\xbe" > "$BITCOIN_WALLET"
@@ -81,4 +111,4 @@ chmod 600 "$ETHEREUM_WALLET"
 chmod 600 "$SOLANA_WALLET"
 chmod 600 "$ELECTRUM_WALLET"
 
-echo "Honeypot deployment complete."
+echo "Linux Honeypot deployment complete."

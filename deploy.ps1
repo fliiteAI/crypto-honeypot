@@ -1,7 +1,8 @@
-# Define honeyfile paths using environment variables
+# Define base paths
 $AppData = [System.Environment]::GetFolderPath('ApplicationData')
 $LocalData = [System.Environment]::GetFolderPath('LocalApplicationData')
 
+# Core Wallet Paths
 $BITCOIN_DIR = "$AppData\Bitcoin"
 $BITCOIN_WALLET = "$BITCOIN_DIR\wallet.dat"
 
@@ -14,15 +15,39 @@ $ELECTRUM_WALLET = "$ELECTRUM_DIR\default_wallet"
 $EXODUS_DIR = "$AppData\Exodus\exodus.wallet"
 $EXODUS_DUMMY = "$EXODUS_DIR\seed.secur"
 
-$METAMASK_DIR = "$LocalData\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn"
-$METAMASK_DUMMY = "$METAMASK_DIR\000003.log"
+# Browser Extension IDs
+$EXT_IDS = @(
+    "nkbihfbeogaeaoehlefnkodbefgpgknn", # MetaMask
+    "bfnaelmomeimhlpmgjnjophhpkkoljpa", # Phantom
+    "ibnejdfjmmkpcnlpebklmnkoeoihofec", # TronLink
+    "hnfanknocfeofbddgcijnmhnfnkdnaad", # Coinbase Wallet
+    "cadiboklkpojfamcoggejbbdjcoiljjk"  # Binance Wallet
+)
 
-# Create directories
+# Browser paths for extensions
+$BROWSER_PATHS = @(
+    "$LocalData\Google\Chrome\User Data\Default\Local Extension Settings",
+    "$LocalData\Microsoft\Edge\User Data\Default\Local Extension Settings",
+    "$LocalData\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings"
+)
+
+# Create core directories
 New-Item -ItemType Directory -Force -Path $BITCOIN_DIR
 New-Item -ItemType Directory -Force -Path $ETHEREUM_DIR
 New-Item -ItemType Directory -Force -Path $ELECTRUM_DIR
 New-Item -ItemType Directory -Force -Path $EXODUS_DIR
-New-Item -ItemType Directory -Force -Path $METAMASK_DIR
+
+# Create Extension Honeyfolders
+foreach ($browserPath in $BROWSER_PATHS) {
+    foreach ($extId in $EXT_IDS) {
+        $fullPath = Join-Path $browserPath $extId
+        New-Item -ItemType Directory -Force -Path $fullPath
+        Set-Content -Path (Join-Path $fullPath "000003.log") -Value "{\"vault\":\"{\\\"data\\\":\\\"fakevaultdata\\\",\\\"iv\\\":\\\"fakeiv\\\",\\\"salt\\\":\\\"fakesalt\\\"}\"}"
+        Set-Content -Path (Join-Path $fullPath "MANIFEST-000001") -Value "MANIFEST-000001"
+        Set-Content -Path (Join-Path $fullPath "CURRENT") -Value "leveldb.BytewiseComparator"
+        New-Item -ItemType File -Force -Path (Join-Path $fullPath "000005.ldb")
+    }
+}
 
 # Create Bitcoin honeyfile (Binary-like)
 [byte[]]$btc_bytes = 0x00, 0x05, 0x31, 0x62, 0x74, 0x63, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe
@@ -74,8 +99,5 @@ Set-Content -Path $ELECTRUM_WALLET -Value $electrum_content
 
 # Create Exodus dummy
 Set-Content -Path $EXODUS_DUMMY -Value "DUMMY_SEED_DATA_FOR_HONEYPOT"
-
-# Create MetaMask dummy
-Set-Content -Path $METAMASK_DUMMY -Value "{\"vault\":\"{\\\"data\\\":\\\"fakevaultdata\\\",\\\"iv\\\":\\\"fakeiv\\\",\\\"salt\\\":\\\"fakesalt\\\"}\"}"
 
 Write-Host "Windows Honeypot deployment complete."

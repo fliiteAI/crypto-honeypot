@@ -4,12 +4,26 @@
   <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/root/.ethereum/keystore</directories>
   <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/root/.config/solana</directories>
   <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/root/.electrum/wallets</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.bitcoin</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.ethereum/keystore</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/solana</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.electrum/wallets</directories>
+
+  <!-- Linux Browser Extensions (Chrome/Brave) -->
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/google-chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/google-chrome/Default/Local Extension Settings/ibnejdfjmmkpcnlpebklmnkoeoihofec</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/google-chrome/Default/Local Extension Settings/hnfanknocfeofbddgcijnmhnfnkdnaad</directories>
+  <directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.config/google-chrome/Default/Local Extension Settings/cadiboklkpojfamcoggejbbdjcoiljjk</directories>
 
   <!-- Windows Crypto Wallet Honeypot Monitoring -->
-  <!-- Adjust paths if using non-default locations -->
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Roaming\Bitcoin</directories>
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Roaming\Ethereum\keystore</directories>
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Roaming\Electrum\wallets</directories>
   <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Roaming\Exodus\exodus.wallet</directories>
-  <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Local\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn</directories>
+
+  <!-- Windows Browser Extensions (Chrome/Edge/Brave) -->
+  <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Local\Google\Chrome\User Data\Default\Local Extension Settings\*</directories>
+  <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Local\Microsoft\Edge\User Data\Default\Local Extension Settings\*</directories>
+  <directories realtime="yes" check_all="yes" report_changes="yes">C:\Users\*\AppData\Local\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\*</directories>
 </syscheck>

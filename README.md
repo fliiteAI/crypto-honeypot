@@ -4,20 +4,26 @@ This project provides a simple yet effective crypto wallet honeypot designed to 
 
 ## Overview
 
-The honeypot creates dummy cryptocurrency wallet files in standard locations that attackers often scan for during post-exploitation or when using automated "info-stealer" malware. Any access, modification, or deletion of these files triggers a high-severity alert in the Wazuh SIEM.
+The honeypot creates dummy cryptocurrency wallet files and browser extension data in standard locations that attackers often scan for during post-exploitation or when using automated "info-stealer" malware. Any access, modification, or deletion of these files triggers a high-severity alert in the Wazuh SIEM.
+
+### Monitored Wallets & Extensions
+- **Core Wallets:** Bitcoin Core, Ethereum (Geth), Electrum, Exodus, Solana CLI.
+- **Browser Extensions:** MetaMask, Phantom, TronLink, Coinbase Wallet, Binance Wallet.
+- **Browsers Supported:** Chrome, Brave (Linux/Windows), and Edge (Windows).
 
 ### Monitored Paths (Linux)
 - Bitcoin: `~/.bitcoin/wallet.dat`
 - Ethereum: `~/.ethereum/keystore/UTC--...`
 - Solana: `~/.config/solana/id.json`
 - Electrum: `~/.electrum/wallets/default_wallet`
+- Extensions: `~/.config/[browser]/Default/Local Extension Settings/[extension_id]`
 
 ### Monitored Paths (Windows)
 - Bitcoin: `%APPDATA%\Bitcoin\wallet.dat`
 - Ethereum: `%APPDATA%\Ethereum\keystore\UTC--...`
 - Electrum: `%APPDATA%\Electrum\wallets\default_wallet`
 - Exodus: `%APPDATA%\Exodus\exodus.wallet\seed.secur`
-- MetaMask (Chrome): `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn\000003.log`
+- Extensions: `%LOCALAPPDATA%\[browser]\User Data\Default\Local Extension Settings\[extension_id]`
 
 ## Deployment Instructions
 
