@@ -1,0 +1,95 @@
+<!--
+  Honeypot Deployer - Windows Sysmon Configuration
+  
+  This configuration should be merged with your existing Sysmon config.
+  It monitors access to honeypot wallet artifacts on Windows endpoints.
+  
+  Prerequisites:
+  - Sysmon installed (https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)
+  - Wazuh agent configured to collect Sysmon events
+  
+  NOTE: Replace USER with the actual Windows username.
+-->
+
+<Sysmon schemaversion="4.90">
+  <EventFiltering>
+
+    <!-- ============================================ -->
+    <!-- File Create/Modify events on honeypot files  -->
+    <!-- ============================================ -->
+    <RuleGroup name="HoneypotFileCreate" groupRelation="or">
+      <FileCreate onmatch="include">
+        <!-- Bitcoin -->
+        <TargetFilename condition="contains">Bitcoin\wallets\wallet.dat</TargetFilename>
+        <!-- Ethereum -->
+        <TargetFilename condition="contains">Ethereum\keystore</TargetFilename>
+        <!-- Solana -->
+        <TargetFilename condition="contains">.config\solana\id.json</TargetFilename>
+        <!-- Cardano -->
+        <TargetFilename condition="contains">cardano\payment.skey</TargetFilename>
+        <!-- XRP -->
+        <TargetFilename condition="contains">xrp-wallet-backup.json</TargetFilename>
+        <!-- Electrum -->
+        <TargetFilename condition="contains">Electrum\wallets</TargetFilename>
+        <!-- Exodus -->
+        <TargetFilename condition="contains">Exodus\exodus.wallet</TargetFilename>
+        <!-- Seed phrases -->
+        <TargetFilename condition="contains">seed-backup.txt</TargetFilename>
+        <TargetFilename condition="contains">crypto-recovery</TargetFilename>
+        <TargetFilename condition="contains">.seed_phrase</TargetFilename>
+        <TargetFilename condition="contains">wallet-backup.json</TargetFilename>
+        <!-- Developer .env -->
+        <TargetFilename condition="contains">defi-bot\.env</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- ============================================ -->
+    <!-- File access/read events on honeypot files    -->
+    <!-- ============================================ -->
+    <RuleGroup name="HoneypotFileAccess" groupRelation="or">
+      <FileBlockExecutable onmatch="include">
+        <TargetFilename condition="contains">Bitcoin\wallets</TargetFilename>
+        <TargetFilename condition="contains">Ethereum\keystore</TargetFilename>
+      </FileBlockExecutable>
+    </RuleGroup>
+
+    <!-- ============================================ -->
+    <!-- Browser extension wallet data access         -->
+    <!-- ============================================ -->
+    <RuleGroup name="HoneypotBrowserExtension" groupRelation="or">
+      <FileCreate onmatch="include">
+        <!-- MetaMask Chrome extension ID -->
+        <TargetFilename condition="contains">nkbihfbeogaeaoehlefnkodbefgpgknn</TargetFilename>
+        <!-- Phantom Chrome extension ID -->
+        <TargetFilename condition="contains">bfnaelmomeimhlpmgjnjophhpkkoljpa</TargetFilename>
+        <!-- Coinbase Wallet Chrome extension ID -->
+        <TargetFilename condition="contains">hnfanknocfeofbddgcijnmhnfnkdnaad</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- ============================================ -->
+    <!-- Process access to wallet-related paths       -->
+    <!-- ============================================ -->
+    <RuleGroup name="HoneypotProcessAccess" groupRelation="or">
+      <ProcessAccess onmatch="include">
+        <CallTrace condition="contains">wallet.dat</CallTrace>
+        <CallTrace condition="contains">keystore</CallTrace>
+        <CallTrace condition="contains">seed-backup</CallTrace>
+      </ProcessAccess>
+    </RuleGroup>
+
+    <!-- ============================================ -->
+    <!-- DNS queries to exfiltration domains          -->
+    <!-- ============================================ -->
+    <RuleGroup name="HoneypotDNS" groupRelation="or">
+      <DnsQuery onmatch="include">
+        <QueryName condition="contains">pastebin.com</QueryName>
+        <QueryName condition="contains">transfer.sh</QueryName>
+        <QueryName condition="contains">file.io</QueryName>
+        <QueryName condition="contains">0x0.st</QueryName>
+        <QueryName condition="contains">webhook.site</QueryName>
+      </DnsQuery>
+    </RuleGroup>
+
+  </EventFiltering>
+</Sysmon>
