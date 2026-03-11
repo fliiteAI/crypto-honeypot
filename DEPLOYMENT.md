@@ -40,21 +40,21 @@ Before deploying agents, the Wazuh Manager must be configured to recognize honey
 ### 1. Install Decoders
 Copy the custom decoders to your Wazuh Manager:
 ```bash
-cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
+sudo cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
 ```
 
 ### 2. Install Rules
 Copy the custom rules to your Wazuh Manager:
 ```bash
-cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
+sudo cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
 ```
 
 ### 3. (Optional) Active Response
 To automatically capture forensic data when a honeypot is accessed:
 ```bash
-cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
-chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
-chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
+sudo cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
+sudo chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
+sudo chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
 ```
 Configure the active response in your `ossec.conf` on the manager.
 
@@ -83,7 +83,7 @@ honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 
 #### 3. Install Audit Rules
 ```bash
-cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
+sudo cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
 
