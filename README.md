@@ -99,13 +99,13 @@ To validate the honeypot end-to-end, you can use the provided validation scripts
 
 ### Linux Validation
 ```bash
-chmod +x tests/validate_honeypot.sh
-./tests/validate_honeypot.sh
+chmod +x "test utils/validate_honeypot.sh"
+"./test utils/validate_honeypot.sh"
 ```
 
 ### Windows Validation
 ```powershell
-.\tests\validate_honeypot.ps1
+.\ "test utils\validate_honeypot.ps1"
 ```
 
 Check your Wazuh dashboard for alerts with **Level 12** and the tag `crypto_honeypot`.
