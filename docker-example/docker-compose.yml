@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  honeypot-node:
+    build:
+      context: ..
+      dockerfile: docker-example/Dockerfile
+    container_name: honeypot-demo
+    privileged: true # Required for auditd and some FIM features
+    volumes:
+      - ..:/home/developer/honeypot
+    hostname: crypto-dev-workstation

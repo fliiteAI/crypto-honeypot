@@ -9,11 +9,15 @@ This document provides detailed requirements and step-by-step instructions for d
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Containerized Deployment](#containerized-deployment)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
+
+### Hardware Recommendations
+For SMB environments, we recommend running the Wazuh Manager on a **Raspberry Pi 4 or 5** with at least 4GB of RAM and a high-endurance microSD card or USB SSD.
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
@@ -24,12 +28,38 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+- **Monitored Paths:**
+  - Bitcoin: `~/.bitcoin/wallet.dat`
+  - Ethereum: `~/.ethereum/keystore/`
+  - Solana: `~/.config/solana/id.json`
+  - Electrum: `~/.electrum/wallets/default_wallet`
+  - Exodus: `~/.config/Exodus/exodus.wallet/seed.secur`
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
-- **Sysmon:** Recommended for enhanced process-level visibility.
+- **Sysmon:** Recommended for enhanced process-level visibility. Use the configuration template at `wazuh/agent-config/honeypot-sysmon.xml`.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+- **Monitored Paths:**
+  - Bitcoin: `%APPDATA%\Bitcoin\wallet.dat`
+  - Ethereum: `%APPDATA%\Ethereum\keystore`
+  - Electrum: `%APPDATA%\Electrum\wallets\default_wallet`
+  - Exodus: `%APPDATA%\Exodus\exodus.wallet`
+
+### Browser Extension Decoys
+The system deploys decoys for the following extension IDs:
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
+
+**Chrome-based (Chrome, Edge, Brave):**
+- Paths: `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>` (Windows)
+- Paths: `~/.config/google-chrome/Default/Local Extension Settings/<ID>` (Linux)
+
+**Firefox:**
+- Path: `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>`
 
 ---
 
@@ -129,18 +159,29 @@ chmod +x deploy.sh
 .\deploy.ps1
 ```
 
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+---
+
+## Containerized Deployment
+For isolated testing or containerized environments, a Docker example is provided in the `docker-example/` directory.
+
+```bash
+cd docker-example
+docker-compose up -d
+```
+This will start an Ubuntu-based environment with the honeypot artifacts pre-deployed and monitoring ready.
 
 ---
 
 ## Deployment Verification
 
-1. **Verify Artifacts:** Run the health check command:
+1. **Run Automated Validation:** Use the provided scripts to check your configuration:
+   - Linux: `chmod +x test-utils/validate_honeypot.sh && ./test-utils/validate_honeypot.sh`
+   - Windows: `.\test-utils\validate_honeypot.ps1`
+2. **Verify Artifacts:** Run the health check command:
    ```bash
    honeypot-deployer health-check --manifest ./my-artifacts/manifest.json
    ```
-2. **Trigger a Test Alert:**
+3. **Trigger a Test Alert:**
    On a Linux agent: `cat ~/.bitcoin/wallet.dat`
    On a Windows agent: `type %APPDATA%\Bitcoin\wallet.dat`
-3. **Check Wazuh Dashboard:** Confirm that a Level 12 (or higher) alert appears in the security events.
+4. **Check Wazuh Dashboard:** Confirm that a Level 12 (or higher) alert appears in the security events.

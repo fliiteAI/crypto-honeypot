@@ -47,7 +47,7 @@ def create_skey_artifact(keypair: ADAKeypair, output_path: Path) -> Path:
 
     Uses the standard TextEnvelope JSON format that cardano-cli produces.
     """
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.mkdir(parents=True, exist_ok=True)
 
     skey_file = output_path / "payment.skey"
     skey_data = {
