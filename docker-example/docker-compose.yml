@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  honeypot:
+    build:
+      context: ..
+      dockerfile: docker-example/Dockerfile
+    container_name: crypto-honeypot
+    restart: unless-stopped
+    volumes:
+      - ./honeypot-data:/home/honeypotuser/artifacts
+    environment:
+      - NODE_NAME=docker-honeypot-agent
