@@ -17,6 +17,7 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+- **Hardware Recommendation (SMB):** For small to medium businesses, a **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5** is highly recommended for running the Wazuh Manager. Ensure a high-performance microSD card or, preferably, an SSD is used for storage to handle FIM logs.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -81,6 +82,13 @@ Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<sy
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
+##### Browser Extension Path Mappings (Linux)
+The honeypot targets standard extension storage paths across multiple browsers:
+- **Chrome:** `~/.config/google-chrome/Default/Local Extension Settings/`
+- **Brave:** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/`
+- **Edge:** `~/.config/microsoft-edge/Default/Local Extension Settings/`
+- **Firefox:** `~/.mozilla/firefox/*.default*/storage/default/` (using `moz-extension+++` naming convention)
+
 #### 3. Install Audit Rules
 ```bash
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
@@ -94,6 +102,12 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+##### Browser Extension Path Mappings (Windows)
+- **Chrome:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\`
+- **Brave:** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\`
+- **Edge:** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\`
+- **Firefox:** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\`
 
 ---
 
@@ -131,6 +145,24 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Containerized Deployment
+
+For isolated environments or testing, you can deploy the Linux honeypot using Docker. This encapsulates the `honeypot-deployer` and its dependencies.
+
+1. **Build the Image:**
+   ```bash
+   docker build -t crypto-honeypot -f docker-example/Dockerfile .
+   ```
+
+2. **Run the Honeypot:**
+   ```bash
+   docker-compose -f docker-example/docker-compose.yml up -d
+   ```
+
+Note: Containerized deployment requires the container to have access to the host's filesystem if you intend to monitor host-level paths, or it can be used to monitor the container's own internal environment.
 
 ---
 
