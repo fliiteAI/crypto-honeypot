@@ -18,12 +18,14 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is highly recommended for the Wazuh Manager in SMB environments, providing a cost-effective and dedicated security appliance.
 
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+- **Kernel Support:** Audit support must be enabled in the kernel (standard in most distributions like Ubuntu, Debian, RHEL).
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
@@ -69,19 +71,35 @@ systemctl restart wazuh-manager
 
 ### Linux Setup
 
-#### 1. Install Auditd
-`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file.
+#### 1. Install and Configure Auditd
+`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file and which process was used.
 ```bash
 sudo apt update && sudo apt install auditd -y
+sudo systemctl enable auditd
+sudo systemctl start auditd
 ```
 
-#### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+#### 2. Configure FIM (File Integrity Monitoring)
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. Use `whodata="yes"` for maximum visibility.
+
+You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one based on your specific deployment:
 ```bash
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
+**Recommended `<syscheck>` settings:**
+```xml
+<syscheck>
+  <frequency>43200</frequency>
+  <scan_on_start>yes</scan_on_start>
+  <whodata>yes</whodata>
+  <check_all>yes</check_all>
+  <report_changes>yes</report_changes>
+</syscheck>
+```
+
 #### 3. Install Audit Rules
+Audit rules ensure that even *read* access is logged, which standard FIM might miss without `whodata`.
 ```bash
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
@@ -90,10 +108,36 @@ sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ### Windows Setup
 
 #### 1. Install Sysmon (Recommended)
-Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) with a configuration that includes the rules in `wazuh/agent-config/honeypot-sysmon.xml`.
+Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon). Deploy it with a configuration that includes the rules in `wazuh/agent-config/honeypot-sysmon.xml` to track process-level access to wallet files.
+```powershell
+.\Sysmon64.exe -i honeypot-sysmon.xml
+```
 
 #### 2. Configure FIM
-Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section. Use the `wazuh-config` command to generate the appropriate XML snippet:
+```powershell
+honeypot-deployer wazuh-config --manifest .\manifest.json --os windows
+```
+
+---
+
+## Browser Extension Path Reference
+
+The honeypot targets common paths used by browser extensions. For best results, deploy decoys to these locations:
+
+| Browser | OS | Path Template |
+|---------|----|---------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/<ID>` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/<ID>` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\<ID>` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>` |
+
+**Supported Extension IDs:**
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
 
 ---
 

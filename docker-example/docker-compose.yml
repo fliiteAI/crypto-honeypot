@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  honeypot-agent:
+    build:
+      context: ..
+      dockerfile: docker-example/Dockerfile
+    container_name: honeypot-agent
+    restart: always
+    environment:
+      - WAZUH_MANAGER=192.168.1.100  # Replace with your Wazuh Manager IP
+      - NODE_NAME=honeypot-docker-01
+    cap_add:
+      - AUDIT_CONTROL
+      - AUDIT_WRITE
+    volumes:
+      - ./honeypot-data:/opt/honeypot/artifacts
+    network_mode: "host"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
