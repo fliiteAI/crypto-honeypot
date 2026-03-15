@@ -16,20 +16,50 @@ This document provides detailed requirements and step-by-step instructions for d
 ## System Requirements
 
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
-- **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Wazuh Manager:** Version 4.x or higher.
+  - **Recommended Hardware (SMB):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 (8GB) for a dedicated, low-cost security appliance.
+- **Wazuh Agent:** Version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
-- **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+- **Permissions:** `sudo` privileges are required for:
+  - Modifying `/var/ossec/etc/ossec.conf`
+  - Installing audit rules in `/etc/audit/rules.d/`
+  - Restarting the `wazuh-agent` and `auditd` services.
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
-- **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+- **Permissions:** Administrator privileges are required for:
+  - Modifying `C:\Program Files (x86)\ossec-agent\ossec.conf`
+  - Deploying artifacts to system or other users' `%APPDATA%` directories.
+
+---
+
+## Browser Extension Path Mappings
+
+The honeypot targets common cryptocurrency wallet extensions. Below are the standard paths for different browsers and operating systems.
+
+### Chrome-based (Chrome, Edge, Brave)
+Chrome-based browsers use the same internal structure for extension storage. Replace `<ExtensionID>` with the specific ID (e.g., `nkbihfbeogaeaoehlefnkodbefgpgknn` for MetaMask).
+
+- **Windows:** `%LOCALAPPDATA%\[Browser]\User Data\Default\Local Extension Settings\<ExtensionID>`
+- **Linux:** `~/.config/[browser]/Default/Local Extension Settings/<ExtensionID>`
+
+| Browser | Path Fragment (`[Browser]`) |
+|---------|-----------------------------|
+| Google Chrome | `Google\Chrome` (Win) / `google-chrome` (Linux) |
+| Microsoft Edge | `Microsoft\Edge` |
+| Brave Browser | `BraveSoftware\Brave-Browser` |
+
+### Firefox
+Firefox uses a different storage mechanism. Paths include a randomized profile string.
+
+- **Windows:** `%APPDATA%\Mozilla\Firefox\Profiles\<profile>\storage\default\moz-extension+++<ExtensionID>`
+- **Linux:** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ExtensionID>`
 
 ---
 
@@ -94,6 +124,34 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Containerized Deployment (Docker)
+
+For environments running containerized workloads, the honeypot can be deployed as part of a Wazuh-monitored container.
+
+### 1. Build the Honeypot Image
+An example `Dockerfile` and `entrypoint.sh` are provided in the `docker-example/` directory.
+
+```bash
+docker build -t honeypot-agent -f docker-example/Dockerfile .
+```
+
+### 2. Run the Container
+Mount your persistent volumes and provide the manifest password via environment variables.
+
+```bash
+docker run -d \
+  --name honeypot-agent \
+  -v /opt/honeypot/artifacts:/honeypot-artifacts \
+  -v /var/ossec/etc:/var/ossec/etc \
+  -e MANIFEST_PASSWORD="your-strong-password" \
+  -e NODE_NAME="prod-web-01" \
+  honeypot-agent
+```
+
+The `entrypoint.sh` script automatically generates new artifacts on startup and injects the required FIM configuration into the Wazuh agent's `ossec.conf`.
 
 ---
 

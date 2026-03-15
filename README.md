@@ -181,7 +181,9 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+- [Deployment Guide](DEPLOYMENT.md) - Detailed installation, OS-specific requirements, and **Containerized Deployment**.
+- [On-Chain Monitoring](ON_CHAIN_MONITORING.md) - Guide for tracking honeypot addresses on block explorers.
+- [Validation Guide](test-utils/README.md) - How to verify your deployment using our validation scripts.
 
 ## Requirements
 
