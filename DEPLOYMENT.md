@@ -17,6 +17,7 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+    - *Hardware Recommendation:* Raspberry Pi 4 or 5 (ideal for SMB environments).
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -70,7 +71,7 @@ systemctl restart wazuh-manager
 ### Linux Setup
 
 #### 1. Install Auditd
-`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file.
+`auditd` is required for high-fidelity "whodata" monitoring. This is essential for user attribution (knowing *which* user or process triggered the alert).
 ```bash
 sudo apt update && sudo apt install auditd -y
 ```
@@ -94,6 +95,39 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Monitoring
+
+The honeypot targets specific browser extension IDs across Chrome, Edge, Brave, and Firefox.
+
+### Monitored Extension IDs
+| Extension | ID |
+|-----------|----|
+| MetaMask | `nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| Phantom | `bfnaelmomeimhlpmgjnjophhpkkoljpa` |
+| TronLink | `ibnejdfjmmkpcnlpebklmnkoeoihofec` |
+| Coinbase Wallet | `hnfanknocfeofbddgcijnmhnfnkdnaad` |
+| Binance Wallet | `cadiboklkpojfamcoggejbbdjcoiljjk` |
+
+### Path Mappings
+- **Chrome/Edge/Brave (Windows):** `%LOCALAPPDATA%\[Browser]\User Data\Default\Local Extension Settings\[ID]`
+- **Chrome/Brave (Linux):** `~/.config/[browser]/Default/Local Extension Settings/[ID]`
+- **Firefox:** Honeyfolders must be placed in the profile storage directory (e.g., `~/.mozilla/firefox/*.default*/storage/default`) and use the `moz-extension+++[ID]` naming convention.
+
+---
+
+## Containerized Deployment
+
+For Docker environments, the honeypot can be deployed within a containerized Wazuh agent.
+
+### Requirements
+- **Environment Variables:** `NODE_NAME` must be passed to identify the agent.
+- **Volumes:** Mount persistent volumes for artifact storage.
+- **Configuration:** Use the `docker-example/entrypoint.sh` script to automate FIM configuration injection into the agent's `ossec.conf`.
+
+> **Note on `auditd` in Containers:** To use high-fidelity `whodata` monitoring inside a Docker container, the container must have access to the host's audit system. This typically requires running the container with `--cap-add=AUDIT_CONTROL --pid=host` or similar elevated privileges. Without this, FIM will fall back to standard monitoring (without user attribution).
 
 ---
 
