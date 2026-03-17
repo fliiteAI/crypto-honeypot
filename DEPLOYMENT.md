@@ -17,6 +17,7 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+  - **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5 (8GB) for SMB environments.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -24,12 +25,33 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+- **Containerized Deployment:** If running the Wazuh agent in a container with `whodata="yes"`, the container must be run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to interact with the host's audit subsystem.
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Browser Extension Path Mappings
+
+The honeypot targets common paths used by info-stealers. Ensure these paths are monitored by Wazuh FIM.
+
+| Browser | OS | Path Template |
+|---------|----|---------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/<ID>` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/<ID>` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\<ID>` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>` |
+
+#### Targeted Extension IDs:
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
