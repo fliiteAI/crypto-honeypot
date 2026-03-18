@@ -9,7 +9,8 @@ This document provides detailed requirements and step-by-step instructions for d
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +19,7 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Manager):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is recommended for SMB environments. Ensure a high-endurance microSD card or USB SSD is used for logging.
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +32,12 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+#### Containerized Environments (Docker)
+- **Privileges:** To enable high-fidelity `whodata` monitoring (via `auditd`) within a containerized Wazuh agent, the container must be run with:
+  - `--cap-add=AUDIT_CONTROL`
+  - `--pid=host`
+- **Persistence:** Mount a persistent volume to the artifact directory to ensure honeypot files survive container restarts.
 
 ---
 
@@ -131,6 +139,31 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Browser Extension Path Mappings
+
+The honeypot targets common paths used by info-stealer malware to find wallet data.
+
+### Chrome-based (Chrome, Brave, Edge)
+Decoys are placed in the `Local Extension Settings` directory using the extension's unique ID.
+
+| Browser | OS | Base Path |
+|---------|----|-----------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+
+### Firefox
+Firefox uses a different structure (`storage/default`) and prepends `moz-extension+++` to the extension directory.
+
+| OS | Base Path |
+|----|-----------|
+| Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+| Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
 
 ---
 
