@@ -1,0 +1,177 @@
+{
+  "version": "1.0",
+  "created": "2026-03-19T07:12:06Z",
+  "modified": "2026-03-19T07:12:07Z",
+  "honeypots": [
+    {
+      "id": "hp-btc-1773904326",
+      "chain": "btc",
+      "created": "2026-03-19T07:12:06Z",
+      "address": "bc11qd5ur3k80cgem35342rhhtk6xwqdkmcdlxn47he",
+      "private_key_wif": "KznkDzM6aHe6D6YRBjq3uaDWrNMgK936xyZKwk9M76HxdKbUXStg",
+      "public_key_hex": "02967cc65eefecac581c6c248edb5d0a02d3673c661a5e51899cc3b795a8aad9a8",
+      "artifact_file": "test-artifacts/btc/wallet.dat",
+      "default_paths": {
+        "linux": "~/.bitcoin/wallets/wallet.dat",
+        "windows": "%APPDATA%\\Bitcoin\\wallets\\wallet.dat",
+        "macos": "~/Library/Application Support/Bitcoin/wallets/wallet.dat"
+      }
+    },
+    {
+      "id": "hp-eth-1773904327",
+      "chain": "eth",
+      "created": "2026-03-19T07:12:07Z",
+      "address": "0x63c663726D36D1b883ebf517f23C41F1ce0A4F8C",
+      "private_key_hex": "2002d9763c27541772ee36e5812dc602999dbb4748f1d88f75f579d12336c707",
+      "keystore_password": "password123",
+      "artifact_files": {
+        "keystore": "test-artifacts/eth/keystore/UTC--2026-03-19T07-12-07.000000000Z--63c663726d36d1b883ebf517f23c41f1ce0a4f8c",
+        "dotenv": "test-artifacts/eth/dotenv/.env"
+      },
+      "default_paths": {
+        "linux": "~/.ethereum/keystore/",
+        "windows": "%APPDATA%\\Ethereum\\keystore\\",
+        "macos": "~/Library/Ethereum/keystore/",
+        "dotenv_linux": "~/projects/defi-bot/.env",
+        "dotenv_windows": "%USERPROFILE%\\projects\\defi-bot\\.env"
+      }
+    },
+    {
+      "id": "hp-sol-1773904327",
+      "chain": "sol",
+      "created": "2026-03-19T07:12:07Z",
+      "address": "4pjteAjSwTvZPN9hpkaQ8EqZng8oNRofegP3D16R4DjE",
+      "private_key_hex": "262009b01b29bfe0d82b1f107ac99735c2ec584d0137793bb2906dc2fab2bd4c",
+      "artifact_files": {
+        "id_json": "test-artifacts/sol/id.json",
+        "cli_config": "test-artifacts/sol/cli/config.yml"
+      },
+      "default_paths": {
+        "linux": "~/.config/solana/id.json",
+        "windows": "%USERPROFILE%\\.config\\solana\\id.json",
+        "macos": "~/.config/solana/id.json"
+      }
+    },
+    {
+      "id": "hp-xrp-1773904327",
+      "chain": "xrp",
+      "created": "2026-03-19T07:12:07Z",
+      "address": "r8RoDbtbBtK1xabn9D9Jj7HtKPu1YH5KY",
+      "private_key_hex": "3c3957fad27b0793f6e8d56ff67537abbcaafee5a6f76a4ebeaa28a02c152ae6",
+      "public_key_hex": "0310a9125203b7fd84c051aadb468c670eb2e11f74239fa8879c3bf97dcf43d21b",
+      "artifact_files": {
+        "wallet_export": "test-artifacts/xrp/xrp-wallet-backup.json"
+      },
+      "default_paths": {
+        "linux": "~/Documents/xrp-wallet-backup.json",
+        "windows": "%USERPROFILE%\\Documents\\xrp-wallet-backup.json",
+        "macos": "~/Documents/xrp-wallet-backup.json"
+      }
+    },
+    {
+      "id": "hp-ada-1773904327",
+      "chain": "ada",
+      "created": "2026-03-19T07:12:07Z",
+      "address_hex": "d5fbee20c730c160644025a3a2341fd7fcf6cc5f58e4c08817cf73f6",
+      "private_key_hex": "2b962005935827bc90ab1edf1489db4e0a75692d9d4315251b6bb46ac18feb6e",
+      "public_key_hex": "9dfed1e01bc92f92e8cef039ba4d8055e1755dab737422e029a4b0613ac93001",
+      "artifact_files": {
+        "signing_key": "test-artifacts/ada/payment.skey",
+        "verification_key": "test-artifacts/ada/payment.vkey"
+      },
+      "default_paths": {
+        "linux": "~/.cardano/payment.skey",
+        "windows": "%APPDATA%\\cardano\\payment.skey",
+        "macos": "~/Library/Application Support/cardano/payment.skey"
+      }
+    },
+    {
+      "id": "hp-browser_decoys-1773904327",
+      "chain": "browser_decoys",
+      "created": "2026-03-19T07:12:07Z",
+      "type": "browser_decoys",
+      "artifact_files": {
+        "metamask": "test-artifacts/browser/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn",
+        "phantom": "test-artifacts/browser/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa",
+        "exodus": "test-artifacts/browser/exodus/exodus.wallet",
+        "electrum": "test-artifacts/browser/electrum/wallets"
+      },
+      "default_paths": {
+        "linux": {
+          "metamask_chrome": "~/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/",
+          "phantom_chrome": "~/.config/google-chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/",
+          "exodus": "~/.config/Exodus/exodus.wallet/",
+          "electrum": "~/.electrum/wallets/"
+        },
+        "windows": {
+          "metamask_chrome": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Local Extension Settings\\nkbihfbeogaeaoehlefnkodbefgpgknn\\",
+          "phantom_chrome": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Local Extension Settings\\bfnaelmomeimhlpmgjnjophhpkkoljpa\\",
+          "exodus": "%APPDATA%\\Exodus\\exodus.wallet\\",
+          "electrum": "%APPDATA%\\Electrum\\wallets\\"
+        },
+        "macos": {
+          "metamask_chrome": "~/Library/Application Support/Google/Chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/",
+          "phantom_chrome": "~/Library/Application Support/Google/Chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/",
+          "exodus": "~/Library/Application Support/Exodus/exodus.wallet/",
+          "electrum": "~/.electrum/wallets/"
+        }
+      }
+    }
+  ],
+  "chain_addresses": {
+    "btc": [
+      "bc11qd5ur3k80cgem35342rhhtk6xwqdkmcdlxn47he"
+    ],
+    "eth": [
+      "0x63c663726D36D1b883ebf517f23C41F1ce0A4F8C"
+    ],
+    "sol": [
+      "4pjteAjSwTvZPN9hpkaQ8EqZng8oNRofegP3D16R4DjE"
+    ],
+    "xrp": [
+      "r8RoDbtbBtK1xabn9D9Jj7HtKPu1YH5KY"
+    ],
+    "ada": [
+      "d5fbee20c730c160644025a3a2341fd7fcf6cc5f58e4c08817cf73f6"
+    ]
+  },
+  "seed_phrases": [
+    {
+      "id": "seed-1773904327",
+      "created": "2026-03-19T07:12:07Z",
+      "type": "seed_phrase",
+      "mnemonic": "cinnamon usual enhance ozone tail forum slot garden rare mule smile that key impulse ski artist patient style unveil pole result coral please security",
+      "word_count": 24,
+      "derived_addresses": {},
+      "artifact_files": {
+        "seed_txt": "test-artifacts/seed/seed-backup.txt",
+        "hidden_seed": "test-artifacts/seed/.seed_phrase",
+        "notes": "test-artifacts/seed/notes.txt",
+        "json_backup": "test-artifacts/seed/wallet-backup.json"
+      },
+      "default_paths": {
+        "linux": [
+          "~/Documents/seed-backup.txt",
+          "~/Desktop/crypto-recovery.txt",
+          "~/.config/.seed_phrase",
+          "~/notes.txt",
+          "~/Documents/wallet-backup.json"
+        ],
+        "windows": [
+          "%USERPROFILE%\\Documents\\seed-backup.txt",
+          "%USERPROFILE%\\Desktop\\crypto-recovery.txt",
+          "%APPDATA%\\.seed_phrase",
+          "%USERPROFILE%\\notes.txt",
+          "%USERPROFILE%\\Documents\\wallet-backup.json"
+        ],
+        "macos": [
+          "~/Documents/seed-backup.txt",
+          "~/Desktop/crypto-recovery.txt",
+          "~/.config/.seed_phrase",
+          "~/notes.txt",
+          "~/Documents/wallet-backup.json"
+        ]
+      }
+    }
+  ]
+}

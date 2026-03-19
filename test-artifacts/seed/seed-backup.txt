@@ -1,0 +1,38 @@
+=== CRYPTO WALLET RECOVERY SEED ===
+=== DO NOT LOSE THIS FILE ===
+
+Created: March 19, 2026
+Wallet: Main Portfolio
+
+Recovery Seed Phrase (24 words):
+  1. cinnamon
+  2. usual
+  3. enhance
+  4. ozone
+  5. tail
+  6. forum
+  7. slot
+  8. garden
+  9. rare
+  10. mule
+  11. smile
+  12. that
+  13. key
+  14. impulse
+  15. ski
+  16. artist
+  17. patient
+  18. style
+  19. unveil
+  20. pole
+  21. result
+  22. coral
+  23. please
+  24. security
+
+IMPORTANT:
+- Store this in a safe place
+- Never share with anyone
+- Required to recover wallet if device is lost
+
+Passphrase: (none)

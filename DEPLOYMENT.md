@@ -17,25 +17,28 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+  - **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
-- **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
+- **Packages:** `auditd` (essential for high-fidelity `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+- **File Permissions:** Honeyfolders should be set to `700` and honeyfiles to `600`.
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
-- **Sysmon:** Recommended for enhanced process-level visibility.
+- **Sysmon:** Recommended for enhanced process-level visibility and DNS query monitoring.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+- **File Permissions:** Restricted access (Full Control for the user, none for others).
 
 ---
 
 ## Wazuh Manager Configuration
 
-Before deploying agents, the Wazuh Manager must be configured to recognize honeypot-specific logs and trigger alerts.
+Before deploying agents, the Wazuh Manager must be configured to recognize honeypot-specific logs, trigger alerts, and optionally execute active responses.
 
 ### 1. Install Decoders
 Copy the custom decoders to your Wazuh Manager:
@@ -44,21 +47,30 @@ cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
 ```
 
 ### 2. Install Rules
-Copy the custom rules to your Wazuh Manager:
+Copy the custom rules to your Wazuh Manager. These rules include detections for file access (100501-100503), rapid multi-file access (100511), and network-capable process interaction (100520).
 ```bash
 cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
 ```
 
 ### 3. (Optional) Active Response
-To automatically capture forensic data when a honeypot is accessed:
+Active Response allows the system to automatically react to threats. For example, it can capture a forensic snapshot or drop the attacker's IP.
+
+**Install Forensic Snapshot Script:**
 ```bash
 cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
 chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
 chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
 ```
-Configure the active response in your `ossec.conf` on the manager.
 
-### 4. Restart Wazuh Manager
+**Configure Active Response in `ossec.conf`:**
+Add the configuration from `wazuh/agent-config/ossec-active-response.conf` to your manager's `/var/ossec/etc/ossec.conf`. This enables:
+- Automated forensic snapshots on any honeypot alert.
+- Temporary IP blocking (`firewall-drop`) when infostealer or exfiltration patterns are detected.
+
+### 4. (Optional) Log Collection for Chain Monitoring
+To ingest logs from the chain monitor service, add the directives from `wazuh/agent-config/ossec-log-collector.conf` to the manager's `ossec.conf`.
+
+### 5. Restart Wazuh Manager
 ```bash
 systemctl restart wazuh-manager
 ```
@@ -76,24 +88,52 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block.
+
+**Important:** On Linux, use `whodata="yes"` for all honeypot directories to ensure user attribution in alerts.
+
+You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
 ```bash
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
 #### 3. Install Audit Rules
+Audit rules provide process-level visibility and are required for `whodata` monitoring.
 ```bash
+# Copy and edit to replace 'USER' with actual username
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
 
+#### 4. Browser Extension Path Mappings
+The honeypot monitors specific extension IDs for popular wallets:
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
+
+**Linux Paths:**
+- **Chrome:** `~/.config/google-chrome/Default/Local Extension Settings/<ID>`
+- **Brave:** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/<ID>`
+- **Firefox:** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<UUID>^userContextId=<ID>`
+
 ### Windows Setup
 
 #### 1. Install Sysmon (Recommended)
-Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) with a configuration that includes the rules in `wazuh/agent-config/honeypot-sysmon.xml`.
+Sysmon is highly recommended for process-level visibility and DNS query correlation.
+1. Download [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon).
+2. Merge the configuration rules from `wazuh/agent-config/honeypot-sysmon.xml` into your Sysmon configuration.
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+**Windows Paths:**
+- **Bitcoin:** `%APPDATA%\Bitcoin\wallets\wallet.dat`
+- **Ethereum:** `%APPDATA%\Ethereum\keystore`
+- **Chrome Extensions:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>`
+- **Edge Extensions:** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>`
+- **Brave Extensions:** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\<ID>`
 
 ---
 
