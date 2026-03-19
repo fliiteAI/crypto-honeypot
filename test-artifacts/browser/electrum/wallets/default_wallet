@@ -1,0 +1,19 @@
+{
+  "wallet_type": "standard",
+  "keystore": {
+    "type": "bip32",
+    "xpub": "xpub6CUGRUo44cdd4e6377f026b6f3491e216e5e59ca7084d00943b199b409103a992302ad50ed5b36b628b4498625289a7581a60613bb95b15b8fc",
+    "pw_hash_version": 1,
+    "encrypted": "7047e34db1d2ecd8af4c5a7a701313ab9d497427e5982a3b1e9694a237bfffe47fc61d25bddd0d2591cfb608c6fd3084595b501f3192d32ae1f613eecb328ea4695e0a4028de960232abc0ff65a2ec786d54b166470ebab88c0396fc6b40552ae1eebb908dd4e40fe90d75d6bdb37f58cb54d0adc5e74c51e5a72c74c666fd83"
+  },
+  "addresses": {
+    "receiving": [
+      "bc11qd5ur3k80cgem35342rhhtk6xwqdkmcdlxn47he"
+    ],
+    "change": [
+      "bc1q769e0a4d631fb70a182f748969e48a796820645f"
+    ]
+  },
+  "seed_version": 18,
+  "use_encryption": true
+}
