@@ -18,6 +18,7 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Manager):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is recommended for SMB environments.
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +31,47 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+#### Containerized Deployment (Docker)
+- **Base Image:** `wazuh/wazuh-agent:4.7.2` or later.
+- **Privileges:** Must be run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to support high-fidelity `whodata` monitoring via `auditd`.
+- **Environment:** `NODE_NAME` must be set to identify the agent.
+
+---
+
+## Wallet Path Mappings
+
+The honeypot artifacts are deployed to standard locations to maximize the chance of discovery by automated tools.
+
+### Linux Paths
+| Wallet/Tool | Primary Path |
+|-------------|--------------|
+| **Bitcoin** | `~/.bitcoin/wallet.dat` |
+| **Ethereum** | `~/.ethereum/keystore/` |
+| **Solana** | `~/.config/solana/id.json` |
+| **Electrum** | `~/.electrum/wallets/default_wallet` |
+| **Exodus** | `~/.config/Exodus/exodus.wallet/seed.secur` |
+
+### Windows Paths
+| Wallet/Tool | Primary Path |
+|-------------|--------------|
+| **Bitcoin** | `%APPDATA%\Bitcoin\wallet.dat` |
+| **Ethereum** | `%APPDATA%\Ethereum\keystore` |
+| **Electrum** | `%APPDATA%\Electrum\wallets\default_wallet` |
+| **Exodus** | `%APPDATA%\Exodus\exodus.wallet` |
+
+### Browser Extension IDs
+The honeypot mimics the local storage structure of popular browser extensions.
+
+| Extension | ID |
+|-----------|----|
+| **MetaMask** | `nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| **Phantom** | `bfnaelmomeimhlpmgjnjophhpkkoljpa` |
+| **TronLink** | `ibnejdfjmmkpcnlpebklmnkoeoihofec` |
+| **Coinbase Wallet** | `hnfanknocfeofbddgcijnmhnfnkdnaad` |
+| **Binance Wallet** | `cadiboklkpojfamcoggejbbdjcoiljjk` |
+
+**Note on Firefox:** Firefox extension data is stored in `~/.mozilla/firefox/*.default*/storage/default` using the `moz-extension+++` naming convention.
 
 ---
 
