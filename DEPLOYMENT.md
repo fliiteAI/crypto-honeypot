@@ -9,15 +9,19 @@ This document provides detailed requirements and step-by-step instructions for d
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Decoy Placement](#browser-extension-decoy-placement)
+6. [Containerized Deployment (Docker)](#containerized-deployment-docker)
+7. [Deployment Verification](#deployment-verification)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## System Requirements
 
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
-- **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Wazuh Manager:** Version 4.x or higher.
+- **Wazuh Agent:** Version 4.x or higher installed on all target endpoints.
+- **Recommended Hardware:** Raspberry Pi 4 (8GB) or Raspberry Pi 5 for SMB environments.
 
 ### Endpoint Requirements
 #### Linux
@@ -129,8 +133,32 @@ chmod +x deploy.sh
 .\deploy.ps1
 ```
 
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+---
+
+## Browser Extension Decoy Placement
+
+Browser extension decoys should be placed in the browser's local storage directory to trigger automated infostealers.
+
+| Browser | OS | Path Mapping |
+|---------|----|--------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+**Note:** Firefox uses a different storage format. Use the `moz-extension+++` directory naming convention if deploying Firefox decoys manually.
+
+---
+
+## Containerized Deployment (Docker)
+
+When deploying inside a Docker container, the following requirements must be met for Wazuh FIM and audit monitoring to function correctly:
+
+1. **Audit Support:** The container must run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to interact with the host's audit system.
+2. **Volume Mounts:** Mount the honeypot directory and the Wazuh agent configuration.
+3. **Wazuh Agent Identity:** Ensure the `NODE_NAME` environment variable is set to identify the containerized agent in the Wazuh Manager.
 
 ---
 
@@ -141,6 +169,22 @@ The `manifest.json` contains the private keys for the generated honeypots. **Alw
    honeypot-deployer health-check --manifest ./my-artifacts/manifest.json
    ```
 2. **Trigger a Test Alert:**
-   On a Linux agent: `cat ~/.bitcoin/wallet.dat`
-   On a Windows agent: `type %APPDATA%\Bitcoin\wallet.dat`
+   - On a Linux agent: `cat ~/.bitcoin/wallet.dat`
+   - On a Windows agent: `type %APPDATA%\Bitcoin\wallet.dat`
 3. **Check Wazuh Dashboard:** Confirm that a Level 12 (or higher) alert appears in the security events.
+
+---
+
+## Troubleshooting
+
+### No Alerts Triggering (Linux)
+- **Check auditd status:** `sudo systemctl status auditd`. If `auditd` is not running, `whodata` FIM will not work.
+- **Verify FIM paths:** Ensure the paths in `ossec.conf` match the exact paths where artifacts were deployed.
+- **Wait for Syscheck scan:** By default, Wazuh FIM may take time to scan. Check your `<frequency>` setting in `ossec.conf`.
+
+### Missing User Attribution in Alerts
+- Ensure `whodata="yes"` is set in the `<directories>` block.
+- Verify `auditd` is installed and the `auditctl -l` command shows the honeypot rules.
+
+### Agent-Manager Connectivity
+- Run `/var/ossec/bin/agent-control -l` (on manager) or `/var/ossec/bin/wazuh-control status` (on agent) to check connection status.
