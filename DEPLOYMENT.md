@@ -18,6 +18,7 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware Recommendation:** For SMB environments, a **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5** is highly recommended for running the Wazuh Manager.
 
 ### Endpoint Requirements
 #### Linux
@@ -63,6 +64,21 @@ Configure the active response in your `ossec.conf` on the manager.
 systemctl restart wazuh-manager
 ```
 
+### 5. Containerized Deployment (Docker)
+If running the Wazuh Agent in a container, ensure you provide the necessary privileges for `auditd` and FIM to function correctly:
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="manager-ip" \
+  -e NODE_NAME="honeypot-node-01" \
+  -v /path/to/artifacts:/var/ossec/data/honeypots:ro \
+  wazuh/wazuh-agent:latest
+```
+*Note: `--cap-add=AUDIT_CONTROL` and `--pid=host` are required for the agent to interact with the host's audit system.*
+
 ---
 
 ## Wazuh Agent Configuration
@@ -94,6 +110,24 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Path Reference
+
+The following table lists common browser extension data paths for various browsers and operating systems. The honeypot artifacts should be placed in these locations to be discovered by infostealers.
+
+| Browser | OS | Path Template |
+|---------|----|---------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| | macOS | `~/Library/Application Support/Google/Chrome/Default/Local Extension Settings/` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| | macOS | `~/Library/Application Support/Microsoft Edge/Default/Local Extension Settings/` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++[ID]^userContextId=[N]/idb/` |
+| | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++[ID]^userContextId=[N]\idb\` |
+
+*Note: For Firefox, `[ID]` is the extension's UUID, which is unique per installation.*
 
 ---
 
