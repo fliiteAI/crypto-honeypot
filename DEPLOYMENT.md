@@ -8,8 +8,10 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+4. [Browser Extension Decoy Paths](#browser-extension-decoy-paths)
+5. [Containerized Deployment](#containerized-deployment)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +20,7 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Recommended):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 for the Wazuh Manager in SMB environments.
 
 ### Endpoint Requirements
 #### Linux
@@ -94,6 +97,51 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Decoy Paths
+
+Honeypot browser extension decoys are deployed to realistic paths for various browsers.
+
+### Chrome-based Browsers (Chrome, Edge, Brave)
+- **Windows:** `%LOCALAPPDATA%\[BrowserPath]\User Data\Default\Local Extension Settings\[ExtensionID]`
+- **Linux:** `~/.config/[BrowserPath]/Default/Local Extension Settings/[ExtensionID]`
+
+**Monitored Extension IDs:**
+- MetaMask: `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- Phantom: `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- TronLink: `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- Coinbase Wallet: `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- Binance Wallet: `cadiboklkpojfamcoggejbbdjcoiljjk`
+
+### Firefox
+- **Windows:** `%APPDATA%\Mozilla\Firefox\Profiles\[ProfileID].default-release\storage\default\moz-extension+++[ExtensionID]`
+- **Linux:** `~/.mozilla/firefox/[ProfileID].default-release/storage/default/moz-extension+++[ExtensionID]`
+
+*Note: The `moz-extension+++` convention is used for Firefox IndexedDB storage.*
+
+---
+
+## Containerized Deployment
+
+When deploying the Wazuh agent within a container for honeypot monitoring, additional privileges are required for high-fidelity `whodata` monitoring via `auditd`.
+
+### Docker Configuration
+Run the container with the following flags:
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e NODE_NAME="honeypot-node" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/ossec/etc:/var/ossec/etc \
+  wazuh/wazuh-agent:latest
+```
+
+- `--cap-add=AUDIT_CONTROL`: Allows the container to modify audit rules on the host.
+- `--pid=host`: Required for the agent to correctly attribute process IDs to the host namespace.
 
 ---
 
