@@ -18,6 +18,7 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Recommended Hardware (Wazuh Manager):** Raspberry Pi 4 (8GB) or Pi 5 for SMB environments.
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +31,13 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+#### Containerized Environments (Docker)
+To support high-fidelity `whodata` monitoring via `auditd` within a containerized Wazuh agent, the container must be run with elevated host privileges:
+- `--cap-add=AUDIT_CONTROL`
+- `--pid=host`
+- Mount the artifact storage directory as a volume.
+- Set the `NODE_NAME` environment variable to identify the agent.
 
 ---
 
@@ -94,6 +102,28 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Decoy Paths
+
+The honeypot system mimics realistic browser extension data paths to trigger infostealers. Below are the standard paths monitored for supported browsers:
+
+| OS | Browser | Base Path |
+|----|---------|-----------|
+| Linux | Chrome | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| Linux | Edge | `~/.config/microsoft-edge/Default/Local Extension Settings/` |
+| Linux | Brave | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| Linux | Firefox | `~/.mozilla/firefox/*.default*/storage/default/` |
+| Windows | Chrome | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| Windows | Edge | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| Windows | Brave | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| Windows | Firefox | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
+
+#### Monitored Extension IDs:
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
