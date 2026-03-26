@@ -51,6 +51,7 @@ def create_seed_txt_artifact(bundle: SeedPhraseBundle, output_path: Path) -> Pat
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     seed_file = output_path / "seed-backup.txt"
+    seed_file.parent.mkdir(parents=True, exist_ok=True)
     words = bundle.mnemonic.split()
     numbered_words = "\n".join(f"  {i + 1}. {word}" for i, word in enumerate(words))
 
@@ -84,6 +85,7 @@ def create_hidden_seed_artifact(bundle: SeedPhraseBundle, output_path: Path) -> 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     hidden_file = output_path / ".seed_phrase"
+    hidden_file.parent.mkdir(parents=True, exist_ok=True)
     content = f"""# wallet recovery - {time.strftime("%Y-%m-%d")}
 {bundle.mnemonic}
 """
@@ -101,6 +103,7 @@ def create_notes_artifact(bundle: SeedPhraseBundle, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     notes_file = output_path / "notes.txt"
+    notes_file.parent.mkdir(parents=True, exist_ok=True)
     content = f"""Shopping list:
 - Milk
 - Bread
@@ -131,6 +134,7 @@ def create_json_backup_artifact(bundle: SeedPhraseBundle, output_path: Path) -> 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     backup_file = output_path / "wallet-backup.json"
+    backup_file.parent.mkdir(parents=True, exist_ok=True)
     backup_data = {
         "version": "2.0",
         "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

@@ -94,6 +94,7 @@ def create_wallet_export_artifact(keypair: XRPKeypair, output_path: Path) -> Pat
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     wallet_file = output_path / "xrp-wallet-backup.json"
+    wallet_file.parent.mkdir(parents=True, exist_ok=True)
     wallet_data = {
         "wallet_name": "Main XRP Wallet",
         "exported_at": "2025-12-15T10:30:00Z",
