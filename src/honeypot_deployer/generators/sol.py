@@ -43,6 +43,7 @@ def create_id_json_artifact(keypair: SOLKeypair, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     id_file = output_path / "id.json"
+    id_file.parent.mkdir(parents=True, exist_ok=True)
     # Standard Solana CLI format: JSON array of byte values
     keypair_list = list(keypair.private_key_bytes)
 

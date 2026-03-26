@@ -44,6 +44,7 @@ def create_keystore_artifact(
     filename = f"UTC--{timestamp}.000000000Z--{address_no_prefix}"
 
     keystore_file = output_path / filename
+    keystore_file.parent.mkdir(parents=True, exist_ok=True)
     with open(keystore_file, "w") as f:
         json.dump(keystore, f, indent=2)
 
@@ -59,6 +60,7 @@ def create_dotenv_artifact(keypair: ETHKeypair, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     env_file = output_path / ".env"
+    env_file.parent.mkdir(parents=True, exist_ok=True)
     env_content = f"""# Ethereum development configuration
 # WARNING: Do not commit this file to version control!
 

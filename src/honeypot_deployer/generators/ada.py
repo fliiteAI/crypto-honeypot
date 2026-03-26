@@ -50,6 +50,7 @@ def create_skey_artifact(keypair: ADAKeypair, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     skey_file = output_path / "payment.skey"
+    skey_file.parent.mkdir(parents=True, exist_ok=True)
     skey_data = {
         "type": "PaymentSigningKeyShelley_ed25519",
         "description": "Payment Signing Key",
@@ -67,6 +68,7 @@ def create_vkey_artifact(keypair: ADAKeypair, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     vkey_file = output_path / "payment.vkey"
+    vkey_file.parent.mkdir(parents=True, exist_ok=True)
     vkey_data = {
         "type": "PaymentVerificationKeyShelley_ed25519",
         "description": "Payment Verification Key",

@@ -4,12 +4,14 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
-    - [Linux Setup](#linux-setup)
-    - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [OS-Specific Requirements](#os-specific-requirements)
+4. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+5. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Standard Monitored Paths](#standard-monitored-paths)
+8. [Containerized Deployment](#containerized-deployment)
+9. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -30,6 +32,25 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, we recommend the following hardware for the Wazuh Manager:
+- **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**.
+- High-endurance microSD card or USB 3.0 SSD for storage.
+- Wired Ethernet connection for stability.
+
+---
+
+## OS-Specific Requirements
+
+### Linux: Auditd
+`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file. Without `auditd`, Wazuh FIM can only detect *that* a file was accessed, but not the specific process or user responsible.
+
+### Windows: Sysmon
+While Wazuh FIM works natively on Windows, installing Sysmon provides deep visibility into process trees, network connections, and DNS queries triggered after a honeypot access.
 
 ---
 
@@ -70,13 +91,12 @@ systemctl restart wazuh-manager
 ### Linux Setup
 
 #### 1. Install Auditd
-`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file.
 ```bash
 sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. Use the `honeypot-deployer` to generate the exact config for your deployed artifacts:
 ```bash
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
@@ -99,9 +119,7 @@ Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot direct
 
 ## Honeypot Artifact Generation
 
-There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
-
-### Option A: Using the CLI (Recommended)
+### Using the CLI (Recommended)
 The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest for high-fidelity monitoring and on-chain correlation.
 
 ```bash
@@ -115,22 +133,43 @@ honeypot-deployer generate --output ./my-artifacts
 honeypot-deployer show --manifest ./my-artifacts/manifest.json
 ```
 
-### Option B: Standalone Scripts
-For quick deployments without installing the Python package, you can use the provided shell and PowerShell scripts. These create a standard set of honeyfiles.
+---
 
-**Linux:**
+## Standard Monitored Paths
+
+The honeypot targets common wallet locations to maximize the chance of discovery by infostealers.
+
+### Linux Paths
+- **Bitcoin:** `~/.bitcoin/wallet.dat`
+- **Ethereum:** `~/.ethereum/keystore/`
+- **Solana:** `~/.config/solana/id.json`
+- **Electrum:** `~/.electrum/wallets/`
+- **Exodus:** `~/.config/Exodus/exodus.wallet/`
+- **Browser Extensions (Chrome):** `~/.config/google-chrome/Default/Local Extension Settings/<extension_id>`
+
+### Windows Paths
+- **Bitcoin:** `%APPDATA%\Bitcoin\wallet.dat`
+- **Ethereum:** `%APPDATA%\Ethereum\keystore\`
+- **Solana:** `%USERPROFILE%\.config\solana\id.json`
+- **Exodus:** `%APPDATA%\Exodus\exodus.wallet\`
+
+---
+
+## Containerized Deployment
+
+When running the Wazuh agent inside a container, special configuration is required to support `whodata` monitoring via `auditd`.
+
+### Docker Run Requirements
+You must grant the container access to the host's audit system:
 ```bash
-chmod +x deploy.sh
-./deploy.sh
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e NODE_NAME=my-container-agent \
+  wazuh/wazuh-agent:latest
 ```
-
-**Windows:**
-```powershell
-.\deploy.ps1
-```
-
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
 
 ---
 
