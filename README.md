@@ -6,14 +6,9 @@ A defensive crypto wallet honeypot system for detecting attackers targeting cryp
 
 This tool generates realistic-looking (but non-funded) cryptocurrency wallet artifacts and deploys them across monitored endpoints. When an attacker whether an infostealer, malware or a manual intruder, accesses these honeypot files, Wazuh detects the activity and fires high-fidelity alerts with zero false positives.
 
-### Detection Layers
-
-| Layer | Mechanism | What It Detects |
-|-------|-----------|-----------------|
-| **Layer 1** | Wazuh FIM (File Integrity Monitoring) | Any read/modify/delete of honeypot wallet files |
-| **Layer 2** | Linux auditd / Windows Sysmon | Process-level access to wallet paths, filesystem enumeration |
-| **Layer 3** | Network correlation | Exfiltration attempts (curl, scp, paste sites) after wallet access |
-| **Layer 4** | On-chain monitoring | Attacker importing stolen keys and querying/using them on-chain |
+For more details on the system design and monitoring strategy, see:
+- [Architecture Overview](docs/ARCHITECTURE.md)
+- [On-Chain Monitoring Guide](docs/ON_CHAIN_MONITORING.md)
 
 ### Supported Chains
 
@@ -121,20 +116,17 @@ honeypot-deployer health-check --manifest ./honeypot-artifacts/manifest.json
 
 ```
 crypto-wallet-honeypot/
+├── docs/                        # Detailed documentation
+│   ├── ARCHITECTURE.md          # Detection layers and MITRE mapping
+│   ├── DEPLOYMENT.md            # Hardware and OS requirements
+│   └── ON_CHAIN_MONITORING.md   # Watchlist setup guide
 ├── src/honeypot_deployer/       # Python CLI application
 │   ├── cli.py                   # Click CLI entry point
 │   ├── manifest.py              # Encrypted manifest management
 │   └── generators/              # Chain-specific key & artifact generators
-│       ├── btc.py               # Bitcoin wallet.dat
-│       ├── eth.py               # Ethereum keystore + .env
-│       ├── sol.py               # Solana id.json
-│       ├── xrp.py               # XRP wallet export
-│       ├── ada.py               # Cardano .skey
-│       ├── seed.py              # BIP-39 canary seed phrases
-│       └── browser.py           # Browser extension decoys
 ├── wazuh/                       # Wazuh SIEM configuration
 │   ├── decoders/                # Custom log decoders
-│   ├── rules/                   # Custom alert rules (15+ rules, 4 detection layers)
+│   ├── rules/                   # Custom alert rules
 │   ├── agent-config/            # Agent FIM, audit, and Sysmon templates
 │   └── active-response/         # Forensic snapshot script
 ├── pyproject.toml               # Python project configuration
@@ -181,7 +173,7 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](docs/DEPLOYMENT.md).
 
 ## Requirements
 
