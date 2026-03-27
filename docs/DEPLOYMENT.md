@@ -4,12 +4,16 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Requirements](#hardware-requirements)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Honeypot Artifact Placement](#honeypot-artifact-placement)
+    - [Browser Extension Paths](#browser-extension-paths)
+6. [Containerized Deployment](#containerized-deployment)
+7. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+8. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -33,6 +37,16 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ---
 
+## Hardware Requirements
+
+### Wazuh Manager (SMB Environment)
+For Small and Medium Business (SMB) environments, we recommend a dedicated device for the Wazuh Manager.
+- **Recommended:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** 128GB+ microSD card or external USB 3.0 SSD (preferred for stability and speed).
+- **Network:** Wired Ethernet connection.
+
+---
+
 ## Wazuh Manager Configuration
 
 Before deploying agents, the Wazuh Manager must be configured to recognize honeypot-specific logs and trigger alerts.
@@ -40,27 +54,27 @@ Before deploying agents, the Wazuh Manager must be configured to recognize honey
 ### 1. Install Decoders
 Copy the custom decoders to your Wazuh Manager:
 ```bash
-cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
+sudo cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
 ```
 
 ### 2. Install Rules
 Copy the custom rules to your Wazuh Manager:
 ```bash
-cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
+sudo cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
 ```
 
 ### 3. (Optional) Active Response
 To automatically capture forensic data when a honeypot is accessed:
 ```bash
-cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
-chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
-chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
+sudo cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
+sudo chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
+sudo chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
 ```
 Configure the active response in your `ossec.conf` on the manager.
 
 ### 4. Restart Wazuh Manager
 ```bash
-systemctl restart wazuh-manager
+sudo systemctl restart wazuh-manager
 ```
 
 ---
@@ -76,14 +90,20 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block.
+
+**Option A: Automated (Recommended)**
+Use the `wazuh-config` CLI command to generate a template specifically for your deployed artifacts:
 ```bash
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
+**Option B: Manual Template**
+If you prefer to configure FIM manually, you can use the template provided at `wazuh/agent-config/ossec-honeypot-fim.conf` and replace `/home/USER` with the actual username on the target endpoint.
+
 #### 3. Install Audit Rules
 ```bash
-cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
+sudo cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
 
@@ -94,6 +114,44 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Honeypot Artifact Placement
+
+Honeypots should be placed in locations where they are most likely to be discovered by infostealers or manual intruders.
+
+### Browser Extension Paths
+
+| Browser | OS | Path (User-Specific) |
+|---------|----|------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+**Extension IDs to Monitor:**
+- MetaMask: `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- Phantom: `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- Coinbase: `hnfanknocfeofbddgcijnmhnfnkdnaad`
+
+---
+
+## Containerized Deployment
+
+For deploying the honeypot within Docker-based environments, you can use the `honeypot-deployer` CLI to generate artifacts and map them into your containers.
+
+### Docker Example
+```bash
+# 1. Generate artifacts on the host
+honeypot-deployer generate --output /opt/honeypot-artifacts
+
+# 2. Map artifacts to a container
+docker run -v /opt/honeypot-artifacts/btc:/root/.bitcoin:ro my-application
+```
+
+**Note:** For Wazuh monitoring within a container, ensure the Wazuh Agent is either running on the host (monitoring the mapped volume) or correctly configured within the container itself. If using `whodata`, the container must be run with `--cap-add=AUDIT_CONTROL`.
 
 ---
 
