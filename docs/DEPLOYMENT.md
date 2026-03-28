@@ -8,12 +8,17 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
+    - [Containerized Deployment (Docker)](#containerized-deployment-docker)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Paths](#browser-extension-paths)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
+
+### Hardware Recommendations
+For SMB environments, we recommend a dedicated **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5** for the Wazuh Manager. This provides a low-cost, low-power, and robust defensive monitoring node.
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
@@ -95,6 +100,22 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Containerized Deployment (Docker)
+When running the Wazuh Agent in a container, you must ensure it has access to the host's audit system for high-fidelity `whodata` monitoring.
+
+1. **Run with Privileges:** The container needs `--cap-add=AUDIT_CONTROL` and `--pid=host`.
+2. **Mount Artifacts:** Mount the directory where your honeypot artifacts are stored into the container.
+
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -e NODE_NAME="prod-server-01" \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /opt/honeypot-artifacts:/opt/honeypot-artifacts \
+  wazuh/wazuh-agent:latest
+```
+
 ---
 
 ## Honeypot Artifact Generation
@@ -131,6 +152,21 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Browser Extension Paths
+
+The system targets several major browser extensions. If you are manually deploying decoys, ensure they are placed in the correct directories for the target browser:
+
+| Browser | Extension Path (Linux) | Extension Path (Windows) |
+|---------|------------------------|--------------------------|
+| **Chrome** | `~/.config/google-chrome/Default/Local Extension Settings/` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Brave** | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Edge** | N/A | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Firefox** | `~/.mozilla/firefox/*.default*/storage/default/` | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
+
+**Note:** Firefox uses a different storage mechanism (`IndexedDB`) than Chrome-based browsers (`LevelDB`). The `honeypot-deployer` CLI handles these differences automatically.
 
 ---
 
