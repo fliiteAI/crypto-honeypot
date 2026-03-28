@@ -37,6 +37,12 @@ For development:
 pip install -e ".[dev]"
 ```
 
+## Documentation
+
+- [Architecture Overview](docs/ARCHITECTURE.md) - Learn about the 4-layer detection strategy.
+- [Deployment Guide](docs/DEPLOYMENT.md) - Detailed hardware and OS setup instructions.
+- [On-Chain Monitoring](docs/ON_CHAIN_MONITORING.md) - How to track stolen keys on the blockchain.
+
 ## Quick Start
 
 ### 1. Generate Honeypot Artifacts
@@ -178,10 +184,6 @@ crypto-wallet-honeypot/
 - The manifest can be AES-encrypted at rest with a user-provided password.
 - Private keys exist only in the manifest and the deployed artifacts -- they are never transmitted.
 - All detection relies on the principle that **legitimate users never access honeypot files**.
-
-## Documentation
-
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
 
 ## Requirements
 

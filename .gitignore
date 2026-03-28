@@ -24,7 +24,9 @@ Thumbs.db
 
 # Generated artifacts (never commit real honeypot keys)
 honeypot-artifacts/
+test-artifacts/
 *.manifest.json
+manifest.json
 chain-monitor-addresses.json
 
 # Environment files
