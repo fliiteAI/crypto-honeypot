@@ -16,7 +16,7 @@ This document provides detailed requirements and step-by-step instructions for d
 ## System Requirements
 
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
+- **Wazuh Manager:** version 4.x or higher. Recommended hardware for SMB environments: **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -30,6 +30,18 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Browser Extension Paths
+The honeypot targets common storage locations for crypto wallet extensions.
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome / Edge / Brave** | Linux | `~/.config/[browser-name]/Default/Local Extension Settings/[extension-id]` |
+| **Chrome / Edge / Brave** | Windows | `%LOCALAPPDATA%\[company-name]\[browser-name]\User Data\Default\Local Extension Settings\[extension-id]` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++[extension-id]` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++[extension-id]` |
+
+*Note: For Chrome-based browsers, the `[extension-id]` is unique per wallet (e.g., MetaMask: `nkbihfbeogaeaoehlefnkodbefgpgknn`).*
 
 ---
 
@@ -94,6 +106,23 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment (Docker)
+
+When running the Wazuh agent in a container, additional capabilities are required to support high-fidelity `whodata` monitoring via `auditd`:
+
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /dev/log:/dev/log \
+  wazuh/wazuh-agent:4.x
+```
+
+- `--cap-add=AUDIT_CONTROL`: Allows the container to manage the kernel's audit system.
+- `--pid=host`: Required for the agent to correctly map processes to users in the audit logs.
 
 ---
 
