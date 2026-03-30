@@ -40,7 +40,7 @@ def create_id_json_artifact(keypair: SOLKeypair, output_path: Path) -> Path:
     This is the standard format produced by `solana-keygen new` --- a JSON array
     of 64 byte values representing the full ed25519 keypair.
     """
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.mkdir(parents=True, exist_ok=True)
 
     id_file = output_path / "id.json"
     # Standard Solana CLI format: JSON array of byte values
