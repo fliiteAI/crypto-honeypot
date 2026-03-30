@@ -121,6 +121,10 @@ honeypot-deployer health-check --manifest ./honeypot-artifacts/manifest.json
 
 ```
 crypto-wallet-honeypot/
+├── docs/                        # Detailed documentation
+│   ├── ARCHITECTURE.md          # 4-layer detection strategy
+│   ├── DEPLOYMENT.md            # Hardware & OS requirements
+│   └── ON_CHAIN_MONITORING.md   # Watchlist setup guide
 ├── src/honeypot_deployer/       # Python CLI application
 │   ├── cli.py                   # Click CLI entry point
 │   ├── manifest.py              # Encrypted manifest management
@@ -181,7 +185,9 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+- **[Architecture Overview](docs/ARCHITECTURE.md):** Learn about the 4-layer detection strategy and MITRE ATT&CK mapping.
+- **[Deployment Guide](docs/DEPLOYMENT.md):** Detailed installation and setup instructions, including hardware and OS-specific requirements.
+- **[On-Chain Monitoring](docs/ON_CHAIN_MONITORING.md):** Guide for setting up watchlists on block explorers to track stolen keys.
 
 ## Requirements
 
