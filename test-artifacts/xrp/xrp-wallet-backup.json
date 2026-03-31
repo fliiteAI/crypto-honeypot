@@ -1,0 +1,17 @@
+{
+  "wallet_name": "Main XRP Wallet",
+  "exported_at": "2025-12-15T10:30:00Z",
+  "network": "mainnet",
+  "account": {
+    "address": "rPe5cAfoyy1sxBoVv5fS1hbk6kzabqiUTa",
+    "public_key": "0296969a69fbfa25c267ec29c51abd942de60e3caf6936e9e83989546ff31be1ce",
+    "secret_key": "5d15166b351ad077ab77bda9ee5d833719b0cb94d09be487475e2548bb650948",
+    "key_type": "secp256k1"
+  },
+  "settings": {
+    "default_fee": "12",
+    "default_destination_tag": null,
+    "require_destination_tag": false
+  },
+  "notes": "Primary wallet - DO NOT SHARE"
+}

@@ -1,0 +1,15 @@
+{
+  "version": "2.0",
+  "created": "2026-03-31T07:11:32Z",
+  "wallet_name": "Main Portfolio",
+  "type": "mnemonic",
+  "seed_phrase": "copy climb target catalog tattoo perfect vendor hair zero morning grant section coconut return skin burden fee young palace garment cook dismiss grocery move",
+  "word_count": 24,
+  "passphrase": "",
+  "networks": [
+    "bitcoin",
+    "ethereum",
+    "solana"
+  ],
+  "note": "Auto-generated backup. Keep in a safe location."
+}
