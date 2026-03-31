@@ -1,0 +1,177 @@
+{
+  "version": "1.0",
+  "created": "2026-03-31T07:11:31Z",
+  "modified": "2026-03-31T07:11:32Z",
+  "honeypots": [
+    {
+      "id": "hp-btc-1774941091",
+      "chain": "btc",
+      "created": "2026-03-31T07:11:31Z",
+      "address": "bc11q5k3rnprzc8twxqakp06pfq89tnrgmuc8r0j2lm",
+      "private_key_wif": "L1A88dQEHJdeFmAncnYFF6xgims5o4VUQoQVoZ5bAGxmd2fRHB7Q",
+      "public_key_hex": "027394d3922d5242d2d9bf2ce54a7937c2af2bb58011f0b3e94440b04d7f8720ff",
+      "artifact_file": "test-artifacts/btc/wallet.dat",
+      "default_paths": {
+        "linux": "~/.bitcoin/wallets/wallet.dat",
+        "windows": "%APPDATA%\\Bitcoin\\wallets\\wallet.dat",
+        "macos": "~/Library/Application Support/Bitcoin/wallets/wallet.dat"
+      }
+    },
+    {
+      "id": "hp-eth-1774941092",
+      "chain": "eth",
+      "created": "2026-03-31T07:11:32Z",
+      "address": "0x8c501a9aA1CC48Bf93e54bdde82BbE7F94193d32",
+      "private_key_hex": "353cfc62a45061c623a64d08ad65cecaa3710ca0f8b5a8164361d7d85e75c4d9",
+      "keystore_password": "password123",
+      "artifact_files": {
+        "keystore": "test-artifacts/eth/keystore/UTC--2026-03-31T07-11-32.000000000Z--8c501a9aa1cc48bf93e54bdde82bbe7f94193d32",
+        "dotenv": "test-artifacts/eth/dotenv/.env"
+      },
+      "default_paths": {
+        "linux": "~/.ethereum/keystore/",
+        "windows": "%APPDATA%\\Ethereum\\keystore\\",
+        "macos": "~/Library/Ethereum/keystore/",
+        "dotenv_linux": "~/projects/defi-bot/.env",
+        "dotenv_windows": "%USERPROFILE%\\projects\\defi-bot\\.env"
+      }
+    },
+    {
+      "id": "hp-sol-1774941092",
+      "chain": "sol",
+      "created": "2026-03-31T07:11:32Z",
+      "address": "ByngWAGd9dAMh2jT8XyHYhNGpHLfVyGnHFX3N4T46XHt",
+      "private_key_hex": "0affde1bd81cfc2f0e0bd8fbd78080e9b69d2fa3b462483156dccc16d17dd986",
+      "artifact_files": {
+        "id_json": "test-artifacts/sol/id.json",
+        "cli_config": "test-artifacts/sol/cli/config.yml"
+      },
+      "default_paths": {
+        "linux": "~/.config/solana/id.json",
+        "windows": "%USERPROFILE%\\.config\\solana\\id.json",
+        "macos": "~/.config/solana/id.json"
+      }
+    },
+    {
+      "id": "hp-xrp-1774941092",
+      "chain": "xrp",
+      "created": "2026-03-31T07:11:32Z",
+      "address": "rPe5cAfoyy1sxBoVv5fS1hbk6kzabqiUTa",
+      "private_key_hex": "5d15166b351ad077ab77bda9ee5d833719b0cb94d09be487475e2548bb650948",
+      "public_key_hex": "0296969a69fbfa25c267ec29c51abd942de60e3caf6936e9e83989546ff31be1ce",
+      "artifact_files": {
+        "wallet_export": "test-artifacts/xrp/xrp-wallet-backup.json"
+      },
+      "default_paths": {
+        "linux": "~/Documents/xrp-wallet-backup.json",
+        "windows": "%USERPROFILE%\\Documents\\xrp-wallet-backup.json",
+        "macos": "~/Documents/xrp-wallet-backup.json"
+      }
+    },
+    {
+      "id": "hp-ada-1774941092",
+      "chain": "ada",
+      "created": "2026-03-31T07:11:32Z",
+      "address_hex": "ea27ddb75cd5e349e57f2470ffaa021af5a2db6650515df65c07403e",
+      "private_key_hex": "1cd1f7981050722716befb9e7b81dedb4e3c25e65a3260d7449c063ce4f1dec7",
+      "public_key_hex": "86f5f3efe4add4be0f090f29dcd1cf317d9b7de9df4d79ca47773d86907e93d5",
+      "artifact_files": {
+        "signing_key": "test-artifacts/ada/payment.skey",
+        "verification_key": "test-artifacts/ada/payment.vkey"
+      },
+      "default_paths": {
+        "linux": "~/.cardano/payment.skey",
+        "windows": "%APPDATA%\\cardano\\payment.skey",
+        "macos": "~/Library/Application Support/cardano/payment.skey"
+      }
+    },
+    {
+      "id": "hp-browser_decoys-1774941092",
+      "chain": "browser_decoys",
+      "created": "2026-03-31T07:11:32Z",
+      "type": "browser_decoys",
+      "artifact_files": {
+        "metamask": "test-artifacts/browser/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn",
+        "phantom": "test-artifacts/browser/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa",
+        "exodus": "test-artifacts/browser/exodus/exodus.wallet",
+        "electrum": "test-artifacts/browser/electrum/wallets"
+      },
+      "default_paths": {
+        "linux": {
+          "metamask_chrome": "~/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/",
+          "phantom_chrome": "~/.config/google-chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/",
+          "exodus": "~/.config/Exodus/exodus.wallet/",
+          "electrum": "~/.electrum/wallets/"
+        },
+        "windows": {
+          "metamask_chrome": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Local Extension Settings\\nkbihfbeogaeaoehlefnkodbefgpgknn\\",
+          "phantom_chrome": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Local Extension Settings\\bfnaelmomeimhlpmgjnjophhpkkoljpa\\",
+          "exodus": "%APPDATA%\\Exodus\\exodus.wallet\\",
+          "electrum": "%APPDATA%\\Electrum\\wallets\\"
+        },
+        "macos": {
+          "metamask_chrome": "~/Library/Application Support/Google/Chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/",
+          "phantom_chrome": "~/Library/Application Support/Google/Chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/",
+          "exodus": "~/Library/Application Support/Exodus/exodus.wallet/",
+          "electrum": "~/.electrum/wallets/"
+        }
+      }
+    }
+  ],
+  "chain_addresses": {
+    "btc": [
+      "bc11q5k3rnprzc8twxqakp06pfq89tnrgmuc8r0j2lm"
+    ],
+    "eth": [
+      "0x8c501a9aA1CC48Bf93e54bdde82BbE7F94193d32"
+    ],
+    "sol": [
+      "ByngWAGd9dAMh2jT8XyHYhNGpHLfVyGnHFX3N4T46XHt"
+    ],
+    "xrp": [
+      "rPe5cAfoyy1sxBoVv5fS1hbk6kzabqiUTa"
+    ],
+    "ada": [
+      "ea27ddb75cd5e349e57f2470ffaa021af5a2db6650515df65c07403e"
+    ]
+  },
+  "seed_phrases": [
+    {
+      "id": "seed-1774941092",
+      "created": "2026-03-31T07:11:32Z",
+      "type": "seed_phrase",
+      "mnemonic": "copy climb target catalog tattoo perfect vendor hair zero morning grant section coconut return skin burden fee young palace garment cook dismiss grocery move",
+      "word_count": 24,
+      "derived_addresses": {},
+      "artifact_files": {
+        "seed_txt": "test-artifacts/seed/seed-backup.txt",
+        "hidden_seed": "test-artifacts/seed/.seed_phrase",
+        "notes": "test-artifacts/seed/notes.txt",
+        "json_backup": "test-artifacts/seed/wallet-backup.json"
+      },
+      "default_paths": {
+        "linux": [
+          "~/Documents/seed-backup.txt",
+          "~/Desktop/crypto-recovery.txt",
+          "~/.config/.seed_phrase",
+          "~/notes.txt",
+          "~/Documents/wallet-backup.json"
+        ],
+        "windows": [
+          "%USERPROFILE%\\Documents\\seed-backup.txt",
+          "%USERPROFILE%\\Desktop\\crypto-recovery.txt",
+          "%APPDATA%\\.seed_phrase",
+          "%USERPROFILE%\\notes.txt",
+          "%USERPROFILE%\\Documents\\wallet-backup.json"
+        ],
+        "macos": [
+          "~/Documents/seed-backup.txt",
+          "~/Desktop/crypto-recovery.txt",
+          "~/.config/.seed_phrase",
+          "~/notes.txt",
+          "~/Documents/wallet-backup.json"
+        ]
+      }
+    }
+  ]
+}

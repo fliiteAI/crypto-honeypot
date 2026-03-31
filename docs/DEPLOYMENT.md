@@ -8,12 +8,18 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Browser Extension Paths](#browser-extension-paths)
+4. [Containerized Deployment](#containerized-deployment)
+5. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
+
+### Hardware Recommendations
+- **Wazuh Manager:** Raspberry Pi 4 (8GB) or Raspberry Pi 5. While any standard server works, this system is optimized for SMB environments utilizing Raspberry Pi hardware.
+- **Endpoints:** Any standard Linux or Windows machine.
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
@@ -28,7 +34,7 @@ This document provides detailed requirements and step-by-step instructions for d
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
-- **Sysmon:** Recommended for enhanced process-level visibility.
+- **Sysmon:** Recommended for enhanced process-level visibility (Layer 2 detection).
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
 
 ---
@@ -70,7 +76,7 @@ systemctl restart wazuh-manager
 ### Linux Setup
 
 #### 1. Install Auditd
-`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file.
+`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file and which *process* was used.
 ```bash
 sudo apt update && sudo apt install auditd -y
 ```
@@ -95,11 +101,49 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Browser Extension Paths
+
+The system monitors specific browser extension IDs across various browsers.
+
+| Extension | Extension ID |
+|-----------|--------------|
+| MetaMask | `nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| Phantom | `bfnaelmomeimhlpmgjnjophhpkkoljpa` |
+| TronLink | `ibnejdfjmmkpcnlpebklmnkoeoihofec` |
+| Coinbase | `hnfanknocfeofbddgcijnmhnfnkdnaad` |
+| Binance | `cadiboklkpojfamcoggejbbdjcoiljjk` |
+
+#### Path Mappings:
+- **Chrome (Linux):** `~/.config/google-chrome/Default/Local Extension Settings/<ID>`
+- **Brave (Linux):** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/<ID>`
+- **Chrome (Windows):** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>`
+- **Edge (Windows):** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>`
+- **Firefox (Linux):** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<RANDOM_ID>^userContextId=<NUMBER>`
+
+*Note: Firefox uses a `moz-extension+++` naming convention within the IndexedDB storage. The honeypot generator handles this structure automatically.*
+
+---
+
+## Containerized Deployment
+
+If running the Wazuh agent within a Docker container, additional privileges are required for `auditd` integration:
+
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="manager-ip" \
+  -e NODE_NAME="honeypot-node" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  wazuh/wazuh-agent:latest
+```
+
+- `--cap-add=AUDIT_CONTROL`: Allows the agent to manage audit rules.
+- `--pid=host`: Required for the agent to correctly associate process IDs with host processes for `whodata` attribution.
+
 ---
 
 ## Honeypot Artifact Generation
-
-There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
 
 ### Option A: Using the CLI (Recommended)
 The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest for high-fidelity monitoring and on-chain correlation.
@@ -128,9 +172,6 @@ chmod +x deploy.sh
 ```powershell
 .\deploy.ps1
 ```
-
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
 
 ---
 
