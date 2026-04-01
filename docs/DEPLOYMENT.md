@@ -9,7 +9,8 @@ This document provides detailed requirements and step-by-step instructions for d
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +19,9 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Hardware Recommendation
+For SMB environments, we recommend running the Wazuh Manager on a **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**. This provides a cost-effective, dedicated security appliance.
 
 ### Endpoint Requirements
 #### Linux
@@ -28,7 +32,7 @@ This document provides detailed requirements and step-by-step instructions for d
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
-- **Sysmon:** Recommended for enhanced process-level visibility.
+- **Sysmon:** Recommended for enhanced process-level visibility and process-to-file correlation.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
 
 ---
@@ -76,7 +80,17 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. Use `whodata="yes"` for best results.
+
+```xml
+<syscheck>
+  <directories check_all="yes" report_changes="yes" realtime="yes" whodata="yes">/home/*/.bitcoin</directories>
+  <directories check_all="yes" report_changes="yes" realtime="yes" whodata="yes">/home/*/.ethereum</directories>
+  <directories check_all="yes" report_changes="yes" realtime="yes" whodata="yes">/home/*/.config/solana</directories>
+</syscheck>
+```
+
+Alternatively, generate a custom config from your manifest:
 ```bash
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
@@ -90,7 +104,10 @@ sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ### Windows Setup
 
 #### 1. Install Sysmon (Recommended)
-Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) with a configuration that includes the rules in `wazuh/agent-config/honeypot-sysmon.xml`.
+Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon). Use the provided configuration template:
+```bash
+sysmon.exe -i wazuh/agent-config/honeypot-sysmon.xml
+```
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
@@ -99,10 +116,8 @@ Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot direct
 
 ## Honeypot Artifact Generation
 
-There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
-
-### Option A: Using the CLI (Recommended)
-The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest for high-fidelity monitoring and on-chain correlation.
+### Using the CLI (Recommended)
+The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest.
 
 ```bash
 # 1. Install the tool
@@ -115,32 +130,30 @@ honeypot-deployer generate --output ./my-artifacts
 honeypot-deployer show --manifest ./my-artifacts/manifest.json
 ```
 
-### Option B: Standalone Scripts
-For quick deployments without installing the Python package, you can use the provided shell and PowerShell scripts. These create a standard set of honeyfiles.
-
-**Linux:**
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-**Windows:**
-```powershell
-.\deploy.ps1
-```
-
 ### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** Use the `--encrypt-manifest` flag (enabled by default).
+
+---
+
+## Browser Extension Path Mappings
+
+The deployer places decoys in standard locations where infostealers look.
+
+| Extension | ID | Chrome/Edge Path (Linux) | Chrome/Edge Path (Windows) |
+|-----------|----|--------------------------|----------------------------|
+| MetaMask | `nkbihfbeogaeaoehlefnkodbefgpgknn` | `~/.config/google-chrome/Default/Local Extension Settings/` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| Phantom | `bfnaelmomeimhlpmgjnjophhpkkoljpa` | `~/.config/google-chrome/Default/Local Extension Settings/` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| Coinbase | `hnfanknocfeofbddgcijnmhnfnkdnaad` | `~/.config/google-chrome/Default/Local Extension Settings/` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
 
 ---
 
 ## Deployment Verification
 
-1. **Verify Artifacts:** Run the health check command:
+1. **Verify Artifacts:**
    ```bash
    honeypot-deployer health-check --manifest ./my-artifacts/manifest.json
    ```
 2. **Trigger a Test Alert:**
-   On a Linux agent: `cat ~/.bitcoin/wallet.dat`
-   On a Windows agent: `type %APPDATA%\Bitcoin\wallet.dat`
-3. **Check Wazuh Dashboard:** Confirm that a Level 12 (or higher) alert appears in the security events.
+   - Linux: `cat ~/.bitcoin/wallet.dat`
+   - Windows: `type %APPDATA%\Bitcoin\wallet.dat`
+3. **Check Wazuh Dashboard:** Confirm that a Level 12+ alert appears.
