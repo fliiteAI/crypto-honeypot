@@ -15,6 +15,8 @@ This tool generates realistic-looking (but non-funded) cryptocurrency wallet art
 | **Layer 3** | Network correlation | Exfiltration attempts (curl, scp, paste sites) after wallet access |
 | **Layer 4** | On-chain monitoring | Attacker importing stolen keys and querying/using them on-chain |
 
+For a detailed look at the system design, see the [Architecture Overview](docs/ARCHITECTURE.md).
+
 ### Supported Chains
 
 - **Bitcoin (BTC)**  `wallet.dat` (Berkeley DB format)
@@ -100,7 +102,7 @@ systemctl restart wazuh-manager
 
 ### 6. Configure Wazuh Agents
 
-On each monitored endpoint, add the FIM configuration to the agent's `ossec.conf`:
+On each monitored endpoint, add the FIM configuration to the agent's `ossec.conf`. For detailed OS-specific setup, see the [Deployment Guide](docs/DEPLOYMENT.md).
 
 ```bash
 # Linux
@@ -121,20 +123,17 @@ honeypot-deployer health-check --manifest ./honeypot-artifacts/manifest.json
 
 ```
 crypto-wallet-honeypot/
+├── docs/                        # Project documentation
+│   ├── ARCHITECTURE.md          # Detection layers and MITRE mapping
+│   ├── DEPLOYMENT.md            # Hardware & OS requirements, setup guide
+│   └── ON_CHAIN_MONITORING.md   # Tracking stolen keys on-chain
 ├── src/honeypot_deployer/       # Python CLI application
 │   ├── cli.py                   # Click CLI entry point
 │   ├── manifest.py              # Encrypted manifest management
 │   └── generators/              # Chain-specific key & artifact generators
-│       ├── btc.py               # Bitcoin wallet.dat
-│       ├── eth.py               # Ethereum keystore + .env
-│       ├── sol.py               # Solana id.json
-│       ├── xrp.py               # XRP wallet export
-│       ├── ada.py               # Cardano .skey
-│       ├── seed.py              # BIP-39 canary seed phrases
-│       └── browser.py           # Browser extension decoys
 ├── wazuh/                       # Wazuh SIEM configuration
 │   ├── decoders/                # Custom log decoders
-│   ├── rules/                   # Custom alert rules (15+ rules, 4 detection layers)
+│   ├── rules/                   # Custom alert rules
 │   ├── agent-config/            # Agent FIM, audit, and Sysmon templates
 │   └── active-response/         # Forensic snapshot script
 ├── pyproject.toml               # Python project configuration
@@ -158,30 +157,17 @@ crypto-wallet-honeypot/
 | 100532 | 15 | Outbound transfer from honeypot address |
 | 100540 | 15 | Correlated file + chain activity |
 
+For more information on on-chain tracking, see the [On-Chain Monitoring Guide](docs/ON_CHAIN_MONITORING.md).
+
 ## MITRE ATT&CK Coverage
 
-| Technique | Name | Detection Layer |
-|-----------|------|-----------------|
-| T1083 | File and Directory Discovery | Layer 1, 2 |
-| T1005 | Data from Local System | Layer 1 |
-| T1555 | Credentials from Password Stores | Layer 1 |
-| T1555.003 | Credentials from Web Browsers | Layer 1 |
-| T1560 | Archive Collected Data | Layer 2, 3 |
-| T1041 | Exfiltration Over C2 Channel | Layer 3 |
-| T1048 | Exfiltration Over Alternative Protocol | Layer 3 |
-| T1657 | Financial Theft | Layer 4 |
-| T1070 | Indicator Removal | Layer 1 |
+See [Architecture Overview](docs/ARCHITECTURE.md) for full mapping.
 
 ## Security Notes
 
 - Generated honeypot keys are **non-funded** by default. Never deposit real funds.
 - The manifest can be AES-encrypted at rest with a user-provided password.
-- Private keys exist only in the manifest and the deployed artifacts -- they are never transmitted.
-- All detection relies on the principle that **legitimate users never access honeypot files**.
-
-## Documentation
-
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+- Private keys exist only in the manifest and the deployed artifacts.
 
 ## Requirements
 
@@ -189,7 +175,7 @@ For detailed installation and setup instructions, including OS-specific requirem
 - **Wazuh:** 4.x (Manager + Agent)
 - **Linux:** `auditd` (required for high-fidelity `whodata` FIM)
 - **Windows:** Sysmon (recommended for process-level visibility)
-- **Hardware:** Raspberry Pi 4/5 (recommended for Wazuh Manager in SMB environments)
+- **Hardware:** Raspberry Pi 4/5 (recommended for Wazuh Manager)
 
 ## License
 
