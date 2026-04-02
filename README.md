@@ -8,12 +8,7 @@ This tool generates realistic-looking (but non-funded) cryptocurrency wallet art
 
 ### Detection Layers
 
-| Layer | Mechanism | What It Detects |
-|-------|-----------|-----------------|
-| **Layer 1** | Wazuh FIM (File Integrity Monitoring) | Any read/modify/delete of honeypot wallet files |
-| **Layer 2** | Linux auditd / Windows Sysmon | Process-level access to wallet paths, filesystem enumeration |
-| **Layer 3** | Network correlation | Exfiltration attempts (curl, scp, paste sites) after wallet access |
-| **Layer 4** | On-chain monitoring | Attacker importing stolen keys and querying/using them on-chain |
+The system employs a 4-layer detection strategy to provide defense-in-depth and high-fidelity alerts. For a detailed breakdown of the detection mechanisms and MITRE ATT&CK mapping, see the [Architecture Overview](docs/ARCHITECTURE.md).
 
 ### Supported Chains
 
@@ -121,56 +116,22 @@ honeypot-deployer health-check --manifest ./honeypot-artifacts/manifest.json
 
 ```
 crypto-wallet-honeypot/
+├── docs/                        # Detailed documentation
+│   ├── ARCHITECTURE.md          # 4-layer detection strategy & MITRE mapping
+│   ├── DEPLOYMENT.md            # Installation & setup guide
+│   └── ON_CHAIN_MONITORING.md   # Tracking stolen keys on-chain
 ├── src/honeypot_deployer/       # Python CLI application
 │   ├── cli.py                   # Click CLI entry point
 │   ├── manifest.py              # Encrypted manifest management
 │   └── generators/              # Chain-specific key & artifact generators
-│       ├── btc.py               # Bitcoin wallet.dat
-│       ├── eth.py               # Ethereum keystore + .env
-│       ├── sol.py               # Solana id.json
-│       ├── xrp.py               # XRP wallet export
-│       ├── ada.py               # Cardano .skey
-│       ├── seed.py              # BIP-39 canary seed phrases
-│       └── browser.py           # Browser extension decoys
 ├── wazuh/                       # Wazuh SIEM configuration
 │   ├── decoders/                # Custom log decoders
-│   ├── rules/                   # Custom alert rules (15+ rules, 4 detection layers)
+│   ├── rules/                   # Custom alert rules
 │   ├── agent-config/            # Agent FIM, audit, and Sysmon templates
 │   └── active-response/         # Forensic snapshot script
 ├── pyproject.toml               # Python project configuration
 └── README.md
 ```
-
-## Wazuh Alert Rules
-
-| Rule ID | Level | Description |
-|---------|-------|-------------|
-| 100501 | 12 | Wallet file accessed |
-| 100502 | 14 | Wallet file modified |
-| 100503 | 14 | Wallet file deleted |
-| 100504 | 13 | Seed phrase file accessed |
-| 100505 | 13 | Browser extension data accessed |
-| 100510 | 10 | Audit rule triggered on honeypot path |
-| 100511 | 14 | Rapid multi-file access (infostealer pattern) |
-| 100520 | 14 | Network-capable process accessed honeypot |
-| 100522 | 13 | Archive utility used after honeypot access |
-| 100530 | 15 | On-chain activity on honeypot address |
-| 100532 | 15 | Outbound transfer from honeypot address |
-| 100540 | 15 | Correlated file + chain activity |
-
-## MITRE ATT&CK Coverage
-
-| Technique | Name | Detection Layer |
-|-----------|------|-----------------|
-| T1083 | File and Directory Discovery | Layer 1, 2 |
-| T1005 | Data from Local System | Layer 1 |
-| T1555 | Credentials from Password Stores | Layer 1 |
-| T1555.003 | Credentials from Web Browsers | Layer 1 |
-| T1560 | Archive Collected Data | Layer 2, 3 |
-| T1041 | Exfiltration Over C2 Channel | Layer 3 |
-| T1048 | Exfiltration Over Alternative Protocol | Layer 3 |
-| T1657 | Financial Theft | Layer 4 |
-| T1070 | Indicator Removal | Layer 1 |
 
 ## Security Notes
 
@@ -181,7 +142,11 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+Detailed documentation is available in the `docs/` directory:
+
+- **[Deployment Guide](docs/DEPLOYMENT.md):** Installation, hardware recommendations, and Wazuh configuration.
+- **[Architecture Overview](docs/ARCHITECTURE.md):** Detailed breakdown of detection layers and MITRE ATT&CK mapping.
+- **[On-Chain Monitoring](docs/ON_CHAIN_MONITORING.md):** How to track stolen honeypot keys on various blockchains.
 
 ## Requirements
 

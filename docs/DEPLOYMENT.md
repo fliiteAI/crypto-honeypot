@@ -19,6 +19,11 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
+### Hardware Recommendations (SMB/Edge)
+For SMB environments, the **Wazuh Manager** can be successfully deployed on Raspberry Pi hardware.
+- **Minimum:** Raspberry Pi 4 (8GB RAM).
+- **Recommended:** Raspberry Pi 5 (8GB RAM) with an NVMe SSD for improved log ingestion and search performance.
+
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
@@ -38,29 +43,41 @@ This document provides detailed requirements and step-by-step instructions for d
 Before deploying agents, the Wazuh Manager must be configured to recognize honeypot-specific logs and trigger alerts.
 
 ### 1. Install Decoders
-Copy the custom decoders to your Wazuh Manager:
+Copy the custom decoders to your Wazuh Manager (requires `sudo`):
 ```bash
-cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
+sudo cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
 ```
 
 ### 2. Install Rules
-Copy the custom rules to your Wazuh Manager:
+Copy the custom rules to your Wazuh Manager (requires `sudo`):
 ```bash
-cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
+sudo cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
 ```
 
 ### 3. (Optional) Active Response
-To automatically capture forensic data when a honeypot is accessed:
+To automatically capture forensic data when a honeypot is accessed (requires `sudo`):
 ```bash
-cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
-chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
-chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
+sudo cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
+sudo chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
+sudo chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
 ```
 Configure the active response in your `ossec.conf` on the manager.
 
-### 4. Restart Wazuh Manager
+### 4. Log Collection
+If you are using the on-chain monitoring component, configure the Wazuh Manager to ingest the `chain-monitor` logs. Add the following to your manager's `ossec.conf`:
+
+```xml
+<localfile>
+  <log_format>json</log_format>
+  <location>/var/log/chain-monitor/events.json</location>
+</localfile>
+```
+
+For more log collection options, see `wazuh/agent-config/ossec-log-collector.conf`.
+
+### 5. Restart Wazuh Manager
 ```bash
-systemctl restart wazuh-manager
+sudo systemctl restart wazuh-manager
 ```
 
 ---
@@ -82,10 +99,18 @@ honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
 #### 3. Install Audit Rules
+Installing audit rules requires `sudo` privileges to write to `/etc/audit/rules.d/`:
 ```bash
-cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
+sudo cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
+
+#### 4. Firefox Extension Monitoring
+Firefox uses a different storage mechanism and pathing convention than Chrome-based browsers. Honeypot folders for Firefox are deployed within the profile storage directory:
+- **Path:** `~/.mozilla/firefox/*.default*/storage/default/`
+- **Naming Convention:** `moz-extension+++<EXTENSION_ID>`
+
+Ensure these paths are included in your FIM configuration if monitoring Firefox users.
 
 ### Windows Setup
 
@@ -94,6 +119,29 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Containerized Deployment
+
+When running a Wazuh agent inside a Docker container, additional configuration is required to support high-fidelity monitoring.
+
+### 1. Host Privileges for Whodata
+To enable `whodata` monitoring (which uses `auditd` on the host), the container must be started with the following flags:
+- `--cap-add=AUDIT_CONTROL`
+- `--pid=host`
+
+### 2. Volume Mounts
+Ensure the honeypot artifact directory is mounted into the container so the Wazuh agent can monitor it:
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /path/to/honeypot-artifacts:/var/lib/honeypot \
+  -e NODE_NAME="honeypot-node" \
+  wazuh/wazuh-agent:latest
+```
 
 ---
 

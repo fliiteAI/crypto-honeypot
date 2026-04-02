@@ -6,6 +6,7 @@ import struct
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 
 import base58
 import ecdsa
@@ -42,7 +43,7 @@ def _base58check_encode(version: int, payload: bytes) -> str:
     """Base58Check encode with version byte."""
     versioned = bytes([version]) + payload
     checksum = _sha256(_sha256(versioned))[:4]
-    return base58.b58encode(versioned + checksum).decode("ascii")
+    return cast(str, base58.b58encode(versioned + checksum).decode("ascii"))
 
 
 def _bech32_polymod(values: list[int]) -> int:
@@ -192,7 +193,7 @@ def get_default_paths() -> dict[str, str]:
     }
 
 
-def generate_artifact_bundle(output_dir: Path) -> dict:
+def generate_artifact_bundle(output_dir: Path) -> dict[str, Any]:
     """Generate a complete BTC honeypot artifact bundle.
 
     Returns a manifest dict with keypair info and artifact paths.
