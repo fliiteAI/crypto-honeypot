@@ -16,7 +16,7 @@ This document provides detailed requirements and step-by-step instructions for d
 ## System Requirements
 
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
+- **Wazuh Manager:** version 4.x or higher. Recommended hardware for SMB environments: **Raspberry Pi 4 (8GB) or Raspberry Pi 5**.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -24,12 +24,39 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+- **Standard Paths:**
+    - Bitcoin: `~/.bitcoin/wallet.dat`
+    - Ethereum: `~/.ethereum/keystore/`
+    - Solana: `~/.config/solana/id.json`
+    - Electrum: `~/.electrum/wallets/`
+    - Exodus: `~/.config/Exodus/exodus.wallet/`
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+- **Standard Paths:**
+    - Bitcoin: `%APPDATA%\Bitcoin\wallet.dat`
+    - Ethereum: `%APPDATA%\Ethereum\keystore\`
+    - Electrum: `%APPDATA%\Electrum\wallets\`
+    - Exodus: `%APPDATA%\Exodus\exodus.wallet\`
+
+### Containerized Deployment (Docker)
+To run the Wazuh agent within a container while maintaining high-fidelity monitoring (especially `whodata`), the container must be started with specific privileges:
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="manager-ip" \
+  -e NODE_NAME="honeypot-node" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /dev:/dev \
+  wazuh/wazuh-agent:latest
+```
+*Note: `--cap-add=AUDIT_CONTROL` and `--pid=host` are required for the agent to interact with the host's audit system.*
 
 ---
 
@@ -94,6 +121,29 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Decoy Placement
+
+The honeypot artifacts include decoys for several popular browser extensions. These should be placed in the appropriate local storage directories for the respective browsers.
+
+#### Chromium-Based (Chrome, Edge, Brave)
+These browsers use LevelDB for extension storage. The honeypot generates a folder structure (`000003.log`, `MANIFEST-000001`, `CURRENT`) that mimics this.
+
+- **Linux:** `~/.config/[browser-name]/Default/Local Extension Settings/[extension-id]`
+- **Windows:** `%LOCALAPPDATA%\[vendor-name]\[browser-name]\User Data\Default\Local Extension Settings\[extension-id]`
+
+#### Firefox
+Firefox uses IndexedDB. Honeyfolders for Firefox should be deployed within the user's profile directory.
+
+- **Linux:** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++[extension-id]`
+- **Windows:** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++[extension-id]`
+
+**Supported Extension IDs:**
+- MetaMask: `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- Phantom: `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- TronLink: `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- Coinbase Wallet: `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- Binance Wallet: `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
