@@ -42,7 +42,8 @@ def _base58check_encode(version: int, payload: bytes) -> str:
     """Base58Check encode with version byte."""
     versioned = bytes([version]) + payload
     checksum = _sha256(_sha256(versioned))[:4]
-    return base58.b58encode(versioned + checksum).decode("ascii")
+    encoded: str = base58.b58encode(versioned + checksum).decode("ascii")
+    return encoded
 
 
 def _bech32_polymod(values: list[int]) -> int:
@@ -87,7 +88,8 @@ def _bech32_encode(hrp: str, witver: int, witprog: bytes) -> str:
 
     ret = [witver] + data_5bit
     checksum = _bech32_create_checksum(hrp, ret)
-    return hrp + "1" + "".join(charset[d] for d in ret + checksum)
+    address: str = hrp + "1" + "".join(charset[d] for d in ret + checksum)
+    return address
 
 
 def generate_btc_keypair() -> BTCKeypair:
