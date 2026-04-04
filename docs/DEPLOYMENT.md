@@ -8,8 +8,10 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+4. [Containerized Deployment (Docker)](#containerized-deployment-docker)
+5. [Standard Wallet Paths](#standard-wallet-paths)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +20,12 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Hardware Recommendations (Wazuh Manager)
+For SMB environments, the Wazuh Manager can be deployed on a Raspberry Pi.
+- **Recommended:** Raspberry Pi 5 (8GB RAM)
+- **Minimum:** Raspberry Pi 4 (4GB RAM)
+- **Storage:** High-performance microSD (Class 10/UHS-1) or USB 3.0 SSD.
 
 ### Endpoint Requirements
 #### Linux
@@ -97,6 +105,50 @@ Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot direct
 
 ---
 
+## Containerized Deployment (Docker)
+
+To deploy the Wazuh agent and honeypot monitoring in a containerized environment:
+
+1. **Run the container with host privileges:**
+   `auditd`-based FIM (`whodata`) requires access to the host's audit subsystem.
+   ```bash
+   docker run -d \
+     --name wazuh-agent \
+     --cap-add=AUDIT_CONTROL \
+     --pid=host \
+     -e WAZUH_MANAGER="192.168.1.100" \
+     -e NODE_NAME="container-honeypot" \
+     -v /path/to/honeypot/artifacts:/mnt/honeypot:ro \
+     wazuh/wazuh-agent:latest
+   ```
+
+2. **Mounting Artifacts:**
+   Ensure your generated honeypot artifacts are mounted into the container at the paths specified in your Wazuh configuration.
+
+---
+
+## Standard Wallet Paths
+
+The honeypot artifacts should be deployed to locations where attackers and infostealers typically look for cryptocurrency data.
+
+### Linux Paths
+- **Bitcoin:** `~/.bitcoin/wallet.dat`
+- **Ethereum:** `~/.ethereum/keystore/`
+- **Solana:** `~/.config/solana/id.json`
+- **Exodus:** `~/.config/Exodus/exodus.wallet/seed.secur`
+- **MetaMask (Chrome):** `~/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/`
+- **MetaMask (Firefox):** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++nkbihfbeogaeaoehlefnkodbefgpgknn/`
+
+### Windows Paths
+- **Bitcoin:** `%APPDATA%\Bitcoin\wallet.dat`
+- **Ethereum:** `%APPDATA%\Ethereum\keystore`
+- **Electrum:** `%APPDATA%\Electrum\wallets\default_wallet`
+- **Exodus:** `%APPDATA%\Exodus\exodus.wallet`
+- **MetaMask (Chrome):** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom (Edge):** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\bfnaelmomeimhlpmgjnjophhpkkoljpa`
+
+---
+
 ## Honeypot Artifact Generation
 
 There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
@@ -128,9 +180,6 @@ chmod +x deploy.sh
 ```powershell
 .\deploy.ps1
 ```
-
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
 
 ---
 
