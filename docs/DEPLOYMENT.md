@@ -8,8 +8,10 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
+    - [Containerized Deployment](#containerized-deployment)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Artifact Locations & Monitoring](#artifact-locations--monitoring)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +20,12 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Hardware Recommendations
+For SMB environments, the Wazuh Manager is recommended to run on:
+- **Raspberry Pi 4 (8GB RAM)**
+- **Raspberry Pi 5 (4GB or 8GB RAM)**
+- **Storage:** High-endurance microSD card or USB 3.0 SSD (preferred).
 
 ### Endpoint Requirements
 #### Linux
@@ -95,6 +103,22 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Containerized Deployment
+When running the Wazuh Agent inside a Docker container, additional privileges are required for `auditd` and high-fidelity monitoring:
+- Use `--cap-add=AUDIT_CONTROL` to allow the agent to manage audit rules.
+- Use `--pid=host` to allow the agent to see processes on the host for user attribution.
+- Pass the `NODE_NAME` environment variable to identify the containerized agent in the Wazuh Manager.
+
+Example:
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e NODE_NAME='prod-web-01' \
+  wazuh/wazuh-agent:latest
+```
+
 ---
 
 ## Honeypot Artifact Generation
@@ -129,8 +153,39 @@ chmod +x deploy.sh
 .\deploy.ps1
 ```
 
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+---
+
+## Artifact Locations & Monitoring
+
+To be effective, honeyfiles must be placed in locations where attackers (and their tools) expect to find them.
+
+### Standard Wallet Paths
+
+| Wallet | Linux Path | Windows Path |
+|--------|------------|--------------|
+| **Bitcoin** | `~/.bitcoin/wallet.dat` | `%APPDATA%\Bitcoin\wallet.dat` |
+| **Ethereum** | `~/.ethereum/keystore/` | `%APPDATA%\Ethereum\keystore\` |
+| **Solana** | `~/.config/solana/id.json` | `%USERPROFILE%\.config\solana\id.json` |
+| **Electrum** | `~/.electrum/wallets/` | `%APPDATA%\Electrum\wallets\` |
+| **Exodus** | `~/.config/Exodus/` | `%APPDATA%\Exodus\` |
+
+### Browser Extension Decoy Paths
+Infostealer malware targets specific directories for browser extension data.
+
+#### Chrome, Edge, and Brave (Chromium-based)
+On Windows, these are located in `%LOCALAPPDATA%`:
+- **Chrome:** `Google\Chrome\User Data\Default\Local Extension Settings\<ID>`
+- **Edge:** `Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>`
+- **Brave:** `BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\<ID>`
+
+Common Extension IDs:
+- MetaMask: `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- Phantom: `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- TronLink: `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+
+#### Firefox
+On Linux, Firefox stores extension data in:
+`~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>`
 
 ---
 
