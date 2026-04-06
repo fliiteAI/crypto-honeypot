@@ -8,16 +8,19 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
+    - [Containerized Deployment](#containerized-deployment)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Paths](#browser-extension-paths)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
 
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
-- **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Wazuh Manager:** Version 4.x or higher.
+- **Wazuh Agent:** Version 4.x or higher installed on all target endpoints.
+- **Hardware (Recommended):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 for the Wazuh Manager in SMB environments.
 
 ### Endpoint Requirements
 #### Linux
@@ -76,12 +79,13 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. Use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
 ```bash
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
 #### 3. Install Audit Rules
+Audit rules enable Wazuh to detect read-access events that standard FIM might miss:
 ```bash
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
@@ -95,11 +99,30 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Containerized Deployment
+
+To monitor honeypots within Docker containers or on container hosts:
+1. **Elevated Privileges:** The Wazuh agent container must run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to interact with the host's audit subsystem.
+2. **Volume Mounts:** Mount the honeypot artifact directory into the container at the expected path.
+3. **Node Name:** Set the `NODE_NAME` environment variable to ensure the agent is uniquely identified in the Wazuh dashboard.
+
+---
+
+## Browser Extension Paths
+
+The system deploys decoys into standard extension storage paths to trigger infostealers.
+
+| Browser | Extension | Path |
+|---------|-----------|------|
+| **Chrome / Brave** | MetaMask | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| **Edge** | MetaMask | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| **Firefox** | Any | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++[ID]` |
+
+*Note: On Linux, Chrome paths are typically under `~/.config/google-chrome/`.*
+
 ---
 
 ## Honeypot Artifact Generation
-
-There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
 
 ### Option A: Using the CLI (Recommended)
 The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest for high-fidelity monitoring and on-chain correlation.
@@ -130,7 +153,7 @@ chmod +x deploy.sh
 ```
 
 ### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default).
 
 ---
 
