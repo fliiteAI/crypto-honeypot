@@ -8,8 +8,10 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Browser Extension Paths](#browser-extension-paths)
+4. [Containerized Deployment](#containerized-deployment)
+5. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +20,10 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Hardware Recommendations (SMB/Home Lab)
+- **Wazuh Manager:** Raspberry Pi 4 (8GB RAM) or Raspberry Pi 5 (8GB RAM) is highly recommended for small-to-medium deployments.
+- **Storage:** High-endurance microSD card or USB 3.0 SSD (recommended).
 
 ### Endpoint Requirements
 #### Linux
@@ -94,6 +100,45 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Paths
+
+The system deploys honeypot files in standard browser extension storage locations. Below are the common paths monitored for various browsers:
+
+| Browser | OS | Path Mapping |
+|---------|----|--------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>^userContextId=<ID>/idb` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++<ID>^userContextId=<ID>\idb` |
+
+*Note: Firefox uses the `moz-extension+++` naming convention for its IndexedDB storage which the honeypot mimics.*
+
+---
+
+## Containerized Deployment
+
+To run the Wazuh Agent in a container while maintaining high-fidelity monitoring (Auditd/whodata), use the following configuration:
+
+### Docker Run Example
+```bash
+docker run -d \
+  --name wazuh-agent-honeypot \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e NODE_NAME='honeypot-container-01' \
+  -v /path/to/honeypot-artifacts:/etc/honeypot:ro \
+  wazuh/wazuh-agent:latest
+```
+
+### Key Requirements:
+- `--cap-add=AUDIT_CONTROL`: Required to interact with the host's audit system.
+- `--pid=host`: Required for the agent to correctly attribute process IDs to host processes.
+- `NODE_NAME`: Unique identifier for the agent in the Wazuh dashboard.
 
 ---
 
