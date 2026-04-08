@@ -17,6 +17,7 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+    - **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5. Recommended for SMB environments.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -70,7 +71,8 @@ systemctl restart wazuh-manager
 ### Linux Setup
 
 #### 1. Install Auditd
-`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file.
+`auditd` is required for high-fidelity "whodata" monitoring, which tracks *who* accessed a file and which process was used. High-fidelity read-access detection is implemented using specific audit rules.
+
 ```bash
 sudo apt update && sudo apt install auditd -y
 ```
@@ -82,9 +84,37 @@ honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
 #### 3. Install Audit Rules
+Audit rules should use the `-p r` (read) permission and the `-k crypto_honeypot` key for proper rule correlation:
+
+```bash
+# Example rule for Bitcoin wallet
+-w /home/user/.bitcoin/wallet.dat -p r -k crypto_honeypot
+```
+
+To install the provided rules:
 ```bash
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
+```
+
+### Containerized Deployment (Docker)
+
+When running the Wazuh agent inside a container, additional privileges are required to enable `whodata` (auditd) monitoring:
+
+1. **Elevated Privileges:** The container must be run with the following flags:
+   - `--cap-add=AUDIT_CONTROL`: Allows the container to manage audit rules.
+   - `--pid=host`: Required for the agent to correlate audit events with host-level processes.
+
+2. **Node Name:** Ensure the `NODE_NAME` environment variable is set to uniquely identify the containerized agent in the Wazuh Manager.
+
+Example Docker run command:
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -e NODE_NAME="prod-web-container" \
+  wazuh/wazuh-agent:latest
 ```
 
 ### Windows Setup
@@ -94,6 +124,25 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Path Mappings
+
+The honeypot deployer targets common browser extension paths to trigger infostealer detection.
+
+| Browser | OS | Path Template |
+|---------|----|---------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/<ID>` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\<ID>` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>` |
+
+#### Monitored Extension IDs:
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
