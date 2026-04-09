@@ -17,19 +17,33 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+  - **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is recommended for SMB environments to ensure adequate performance for the indexer and dashboard components.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
+  - Without `auditd`, Wazuh FIM can detect *that* a file was accessed, but not *who* (which user/process) accessed it.
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
-- **Sysmon:** Recommended for enhanced process-level visibility.
+- **Sysmon:** Highly recommended for enhanced process-level visibility and network correlation.
+  - Sysmon provides the necessary telemetry to link file access events with subsequent network activity (e.g., an infostealer uploading the stolen wallet).
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Browser Extension Path Mappings
+The honeypot can deploy decoys for popular browser extensions. Monitoring these paths is critical for detecting infostealers.
+
+| Browser | Extension | Linux Path | Windows Path |
+|---------|-----------|------------|--------------|
+| **Chrome** | MetaMask | `~/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| **Chrome** | Phantom | `~/.config/google-chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\bfnaelmomeimhlpmgjnjophhpkkoljpa` |
+| **Edge** | MetaMask | `~/.config/microsoft-edge/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn` | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| **Brave** | MetaMask | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn` | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| **Firefox** | MetaMask | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++nkbihfbeogaeaoehlefnkodbefgpgknn` | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++nkbihfbeogaeaoehlefnkodbefgpgknn` |
 
 ---
 
@@ -127,6 +141,29 @@ chmod +x deploy.sh
 **Windows:**
 ```powershell
 .\deploy.ps1
+```
+
+### Option C: Containerized Deployment
+When deploying the Wazuh Agent in a containerized environment (e.g., Docker), ensure the following:
+
+1.  **Node Identification:** Set the `NODE_NAME` environment variable to uniquely identify the container in the Wazuh Manager.
+2.  **Volume Mounts:** Mount the directories where honeypot artifacts are deployed as persistent volumes to ensure they survive container restarts.
+3.  **Privileges:** For `whodata` monitoring (which uses `auditd`), the container must be run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to interact with the host's audit subsystem.
+
+Example `docker-compose.yml` snippet:
+```yaml
+services:
+  wazuh-agent:
+    image: wazuh/wazuh-agent:latest
+    environment:
+      - WAZUH_MANAGER=192.168.1.100
+      - NODE_NAME=crypto-honeypot-agent-01
+    cap_add:
+      - AUDIT_CONTROL
+    pid: host
+    volumes:
+      - ./honeypot-artifacts:/var/ossec/etc/honeypot-artifacts:ro
+      - /var/ossec/etc/ossec.conf:/var/ossec/etc/ossec.conf:ro
 ```
 
 ### Manifest Security
