@@ -18,6 +18,8 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Manager):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 recommended for SMB environments.
+- **Connectivity:** Port 1514 (TCP/UDP) for agent communication and 1515 (TCP) for agent enrollment must be open on the manager.
 
 ### Endpoint Requirements
 #### Linux
@@ -94,6 +96,28 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Paths
+
+The honeypot targets common wallet extensions. Ensure the following paths are monitored (Wazuh wildcards supported):
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+
+---
+
+## Containerized Deployment
+
+When deploying the Wazuh agent in a containerized environment (e.g., Docker), additional configuration is required to support high-fidelity monitoring:
+
+1. **Elevated Privileges:** The container must run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to allow `auditd` to track user attribution for `whodata` events.
+2. **Volume Mounting:** Ensure the honeypot artifact directories are mounted into the container so the Wazuh agent can monitor them.
+3. **Node Name:** Set the `NODE_NAME` environment variable to uniquely identify the containerized agent in the Wazuh Manager.
 
 ---
 
