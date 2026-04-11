@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment](#containerized-deployment)
+5. [Browser Extension Honeyfolders](#browser-extension-honeyfolders)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -30,6 +33,16 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, the Wazuh Manager can be efficiently hosted on low-power ARM devices.
+
+- **Recommended:** Raspberry Pi 5 (8GB RAM) with NVMe SSD.
+- **Minimum:** Raspberry Pi 4 (8GB RAM).
+- **Storage:** Use high-endurance SD cards or, preferably, USB3/NVMe SSDs to handle FIM log volume.
 
 ---
 
@@ -94,6 +107,46 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment
+
+When running the Wazuh agent in a Docker container, additional configuration is required to support high-fidelity monitoring.
+
+#### Docker Run Requirements
+To enable `whodata` (auditd) support, the container must have access to the host's audit system:
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER="manager-ip" \
+  -e NODE_NAME="honeypot-endpoint-01" \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/ossec/etc:/var/ossec/etc \
+  wazuh/wazuh-agent:latest
+```
+
+- **`NODE_NAME`**: Essential for identifying the containerized agent in the Wazuh dashboard.
+- **`--cap-add=AUDIT_CONTROL`**: Allows the container to interact with the host's audit kernel.
+- **`--pid=host`**: Required for the audit module to correctly attribute events to processes.
+
+---
+
+## Browser Extension Honeyfolders
+
+Honeypot browser extensions are deployed to specific paths depending on the browser and OS.
+
+### Path Mappings
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+### Firefox Specifics
+Firefox uses a different naming convention for its extension storage. Honeyfolders for Firefox should use the `moz-extension+++<UUID>` format. The `honeypot-deployer` handles this during generation when the `--browser firefox` flag is used.
 
 ---
 
