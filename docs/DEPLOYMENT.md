@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Containerized Deployment (Docker)](#containerized-deployment-docker)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Target Path Reference](#target-path-reference)
+8. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +21,9 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Connectivity:**
+  - Port **1514 (TCP/UDP)**: Agent event communication.
+  - Port **1515 (TCP)**: Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +36,16 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, we recommend running the Wazuh Manager on dedicated hardware to ensure consistent performance.
+
+- **Recommended:** Raspberry Pi 4 (8GB model) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card or USB 3.0 SSD (preferred).
+- **Network:** Wired Ethernet connection.
 
 ---
 
@@ -76,10 +92,7 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
-```bash
-honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
-```
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. Use the `honeypot-deployer wazuh-config` command to generate the specific configuration for your artifacts.
 
 #### 3. Install Audit Rules
 ```bash
@@ -97,12 +110,26 @@ Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot direct
 
 ---
 
+## Containerized Deployment (Docker)
+
+If you are running the Wazuh agent inside a Docker container, ensure you mount the volumes you wish to monitor and grant the container the necessary privileges for `auditd` to function.
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -v /home:/home:ro \
+  wazuh/wazuh-agent:latest
+```
+
+---
+
 ## Honeypot Artifact Generation
 
-There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
-
-### Option A: Using the CLI (Recommended)
-The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest for high-fidelity monitoring and on-chain correlation.
+### Using the CLI (Recommended)
+The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest.
 
 ```bash
 # 1. Install the tool
@@ -111,26 +138,29 @@ pip install .
 # 2. Generate artifacts
 honeypot-deployer generate --output ./my-artifacts
 
-# 3. View the generated manifest
-honeypot-deployer show --manifest ./my-artifacts/manifest.json
+# 3. Generate Wazuh config snippet
+honeypot-deployer wazuh-config --manifest ./my-artifacts/manifest.json --os linux
 ```
 
-### Option B: Standalone Scripts
-For quick deployments without installing the Python package, you can use the provided shell and PowerShell scripts. These create a standard set of honeyfiles.
+---
 
-**Linux:**
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
+## Target Path Reference
 
-**Windows:**
-```powershell
-.\deploy.ps1
-```
+The following paths are monitored by default as they are standard locations for cryptocurrency wallets.
 
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+### Linux Paths
+- **Bitcoin:** `~/.bitcoin/wallet.dat`
+- **Ethereum:** `~/.ethereum/keystore/`
+- **Solana:** `~/.config/solana/id.json`
+- **Electrum:** `~/.electrum/wallets/`
+- **Exodus:** `~/.config/Exodus/`
+
+### Windows Paths
+- **Bitcoin:** `%APPDATA%\Bitcoin\wallet.dat`
+- **Ethereum:** `%APPDATA%\Ethereum\keystore\`
+- **Solana:** `%USERPROFILE%\.config\solana\id.json`
+- **Electrum:** `%APPDATA%\Electrum\wallets\`
+- **Exodus:** `%APPDATA%\Exodus\`
 
 ---
 
@@ -141,6 +171,6 @@ The `manifest.json` contains the private keys for the generated honeypots. **Alw
    honeypot-deployer health-check --manifest ./my-artifacts/manifest.json
    ```
 2. **Trigger a Test Alert:**
-   On a Linux agent: `cat ~/.bitcoin/wallet.dat`
-   On a Windows agent: `type %APPDATA%\Bitcoin\wallet.dat`
+   - **On Linux:** `cat ~/.bitcoin/wallet.dat`
+   - **On Windows:** `type %APPDATA%\Bitcoin\wallet.dat`
 3. **Check Wazuh Dashboard:** Confirm that a Level 12 (or higher) alert appears in the security events.
