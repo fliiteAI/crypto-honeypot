@@ -18,11 +18,15 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Recommended):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 for SMB environments.
+- **Network Requirements:**
+    - **Port 1514 (TCP/UDP):** Agent event communication.
+    - **Port 1515 (TCP):** Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
-- **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
+- **Packages:** `auditd` (essential for high-fidelity `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
 
 #### Windows
@@ -30,6 +34,21 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Containerized Deployment (Docker)
+To run the Wazuh agent within a container while maintaining high-fidelity monitoring:
+- **Capabilities:** Run with `--cap-add=AUDIT_CONTROL` to allow the agent to manage audit rules.
+- **Namespace:** Use `--pid=host` to ensure the agent can attribute file access to host processes.
+- **Volumes:** Mount necessary host directories and the Wazuh configuration:
+  ```bash
+  docker run -d --name wazuh-agent \
+    --cap-add=AUDIT_CONTROL \
+    --pid=host \
+    -v /var/ossec/etc:/var/ossec/etc \
+    -v /home:/home:ro \
+    -e NODE_NAME="my-container-agent" \
+    wazuh/wazuh-agent:latest
+  ```
 
 ---
 
@@ -76,7 +95,9 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. Use `whodata="yes"` for all honeypot directories to enable user attribution.
+
+You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one based on your manifest:
 ```bash
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
@@ -94,6 +115,39 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Artifact Placement & Browser Support
+
+The honeypot is most effective when artifacts are placed in their "natural" locations.
+
+### Common Wallet Paths
+| Chain/App | Linux Path | Windows Path |
+|-----------|------------|--------------|
+| **Bitcoin** | `~/.bitcoin/wallet.dat` | `%APPDATA%\Bitcoin\wallet.dat` |
+| **Ethereum** | `~/.ethereum/keystore/` | `%APPDATA%\Ethereum\keystore\` |
+| **Solana** | `~/.config/solana/id.json` | `N/A` |
+| **Exodus** | `~/.config/Exodus/exodus.wallet/` | `%APPDATA%\Exodus\exodus.wallet\` |
+| **Electrum** | `~/.electrum/wallets/` | `%APPDATA%\Electrum\wallets\` |
+
+### Browser Extension Decoys
+The system supports generating decoys for multiple browsers by placing them in the `Local Extension Settings` (Chromium) or `storage/default` (Firefox) directories.
+
+#### Chromium-based (Chrome, Edge, Brave)
+Extension IDs remain consistent across these browsers:
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance:** `cadiboklkpojfamcoggejbbdjcoiljjk`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+
+#### Firefox
+Firefox uses a different directory structure and internal naming. Decoy folders should be placed in:
+`~/.mozilla/firefox/*.default*/storage/default/` (Linux)
+`%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` (Windows)
+
+Decoy folders use the `moz-extension+++` prefix followed by the extension's internal UUID.
 
 ---
 
