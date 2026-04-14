@@ -8,8 +8,11 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+4. [Advanced Deployment](#advanced-deployment)
+    - [Browser Extension Path Mappings](#browser-extension-path-mappings)
+    - [Docker / Containerized Deployment](#docker--containerized-deployment)
+5. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -17,7 +20,10 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
-- **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Manager):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is recommended for SMB environments.
+- **Network:**
+    - Port **1514 (TCP/UDP)**: Agent communication.
+    - Port **1515 (TCP)**: Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -94,6 +100,41 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Advanced Deployment
+
+### Browser Extension Path Mappings
+
+The honeypot creates decoys for popular extensions. Depending on the browser, these should be placed in the following directories (replace `[USER]` and `[PROFILE]` as appropriate):
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome** | Linux | `~/.config/google-chrome/[PROFILE]/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\[PROFILE]\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\[PROFILE]\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/[PROFILE]/Local Extension Settings/` |
+| **Firefox** | Linux | `~/.mozilla/firefox/[PROFILE]/storage/default/` |
+
+**Extension IDs monitored:**
+- MetaMask: `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- Phantom: `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- Coinbase: `hnfanknocfeofbddgcijnmhnfnkdnaad`
+
+### Docker / Containerized Deployment
+
+To monitor a Docker host or specific containers:
+
+1. **Install Wazuh Agent on Host:** The most reliable way is to monitor the host's Docker volume directories (usually `/var/lib/docker/volumes/...`).
+2. **Sidecar Container:** Run a Wazuh Agent container with the honeypot paths mounted as volumes.
+   ```bash
+   docker run -d --name wazuh-agent \
+     -e WAZUH_MANAGER="192.168.1.100" \
+     -v /path/to/honeypots:/mnt/honeypots:ro \
+     wazuh/wazuh-agent:latest
+   ```
+3. **Privileged Mode:** For `whodata` (auditd) support inside a container, you must run it with `--cap-add=AUDIT_CONTROL` and `--pid=host`.
 
 ---
 
