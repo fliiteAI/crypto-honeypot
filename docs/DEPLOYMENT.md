@@ -17,7 +17,11 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+  - **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Connectivity:**
+  - Port **1514 (TCP/UDP)**: Agent event communication.
+  - Port **1515 (TCP)**: Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -65,6 +69,27 @@ systemctl restart wazuh-manager
 
 ---
 
+## Containerized Deployment
+
+If running the Wazuh Agent within a Docker container, additional privileges are required to support high-fidelity `whodata` monitoring via `auditd`.
+
+### Docker Run Requirements
+The container must be started with the following flags:
+- `--cap-add=AUDIT_CONTROL`: Allows the container to manage audit rules.
+- `--pid=host`: Allows the container to see processes on the host for attribution.
+
+Example:
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  wazuh/wazuh-agent:latest
+```
+
+---
+
 ## Wazuh Agent Configuration
 
 ### Linux Setup
@@ -86,6 +111,26 @@ honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
+
+### Browser Extension Path Mappings
+
+The honeypot decoys should be placed in the following standard locations to be discovered by infostealers.
+
+#### Chrome-based Browsers (Chrome, Edge, Brave)
+- **Linux:** `~/.config/[browser-name]/Default/Local Extension Settings/[extension-id]`
+- **Windows:** `%LOCALAPPDATA%\[browser-vendor]\[browser-name]\User Data\Default\Local Extension Settings\[extension-id]`
+
+#### Firefox
+- **Linux:** `~/.mozilla/firefox/[profile].default-release/storage/default/moz-extension+++[UUID]`
+- **Windows:** `%APPDATA%\Mozilla\Firefox\Profiles\[profile].default-release\storage\default\moz-extension+++[UUID]`
+
+**Extension IDs monitored:**
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
+
+---
 
 ### Windows Setup
 
