@@ -18,18 +18,39 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Manager):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is recommended for SMB environments.
+- **Connectivity:**
+  - Port **1514 (TCP/UDP)**: Agent event communication.
+  - Port **1515 (TCP)**: Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+- **Containerization:** If running the Wazuh agent in a container, it must have `--cap-add=AUDIT_CONTROL` and `--pid=host` to support `whodata` via `auditd`.
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Browser Extension Path Mappings
+
+The honeypot targets common infostealer patterns by placing decoys in the following default locations:
+
+### Chrome / Edge / Brave (Chromium-based)
+- **Linux:** `~/.config/[browser-name]/Default/Local Extension Settings/[extension-id]`
+- **Windows:** `%LOCALAPPDATA%\[browser-name]\User Data\Default\Local Extension Settings\[extension-id]`
+- **MacOS:** `~/Library/Application Support/[browser-name]/Default/Local Extension Settings/[extension-id]`
+
+### Supported Extension IDs:
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
 
 ---
 
