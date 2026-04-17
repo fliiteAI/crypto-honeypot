@@ -17,7 +17,11 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+    - **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is highly recommended for SMB environments.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Connectivity:**
+    - **Port 1514 (TCP/UDP):** Required for agent-to-manager event communication.
+    - **Port 1515 (TCP):** Required for agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -86,6 +90,27 @@ honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
+
+### Browser Extension Path Mappings
+
+The honeypot targets several browser extensions across different browsers and operating systems. Below are the standard paths monitored:
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome / Brave / Edge** | Linux | `~/.config/<browser>/Default/Local Extension Settings/<extension_id>/` |
+| **Chrome / Brave / Edge** | Windows | `%LOCALAPPDATA%\<browser>\User Data\Default\Local Extension Settings\<extension_id>\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<extension_id>/` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++<extension_id>\` |
+
+*Note: For Firefox, the `moz-extension+++` prefix followed by the extension ID is used for the decoy folder name.*
+
+### Containerized Deployment (Docker)
+
+When deploying the Wazuh Agent in a containerized environment, additional configuration is required to ensure full visibility.
+
+1.  **Elevated Privileges:** To enable high-fidelity `whodata` monitoring (via `auditd`), the container must be run with `--cap-add=AUDIT_CONTROL` and `--pid=host`.
+2.  **Environment Variables:** Pass the `NODE_NAME` environment variable to uniquely identify the containerized agent in the Wazuh dashboard.
+3.  **Volume Mounts:** Ensure that the host directories containing honeypot artifacts are correctly mounted into the container for monitoring.
 
 ### Windows Setup
 
