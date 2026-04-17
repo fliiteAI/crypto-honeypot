@@ -27,6 +27,8 @@ EXTENSION_IDS = {
     "metamask_chrome": "nkbihfbeogaeaoehlefnkodbefgpgknn",
     "phantom_chrome": "bfnaelmomeimhlpmgjnjophhpkkoljpa",
     "coinbase_chrome": "hnfanknocfeofbddgcijnmhnfnkdnaad",
+    "tronlink_chrome": "ibnejdfjmmkpcnlpebklmnkoeoihofec",
+    "binance_chrome": "cadiboklkpojfamcoggejbbdjcoiljjk",
 }
 
 
