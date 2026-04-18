@@ -19,6 +19,14 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
+### Hardware Requirements (Wazuh Manager)
+For SMB environments, it is highly recommended to run the Wazuh Manager on a **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**. This provides a cost-effective, dedicated security monitoring appliance.
+
+### Network Requirements
+Ensure the following ports are open on the Wazuh Manager to allow agent communication:
+- **Port 1514 (TCP/UDP):** Agent event communication.
+- **Port 1515 (TCP):** Agent enrollment and keep-alive.
+
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
@@ -94,6 +102,23 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Support
+The honeypot supports decoys for major browsers. Ensure you monitor the following paths based on the browser in use:
+
+| Browser | OS | Path Pattern |
+|---------|----|--------------|
+| Chrome | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| Chrome | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| Edge | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| Brave | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| Brave | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| Firefox | Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+### Containerized Deployment
+If running the Wazuh agent within a container (e.g., Docker), the following privileges are required to enable `whodata` monitoring via `auditd`:
+- `--cap-add=AUDIT_CONTROL`: Allows the agent to manage audit rules.
+- `--pid=host`: Required for the agent to correctly attribute process IDs to host processes.
 
 ---
 
