@@ -18,6 +18,10 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Recommended):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 for SMB environments.
+- **Connectivity:**
+  - Port **1514 (TCP/UDP)**: Agent event communication.
+  - Port **1515 (TCP)**: Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -94,6 +98,44 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Containerized Deployment (Docker)
+
+To run the Wazuh agent within a Docker container while maintaining high-fidelity `whodata` monitoring, the following privileges are required:
+
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="manager-ip" \
+  -e NODE_NAME="agent-name" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/ossec/etc:/var/ossec/etc \
+  wazuh/wazuh-agent:latest
+```
+
+**Note:** `--cap-add=AUDIT_CONTROL` and `--pid=host` are necessary for the agent to interact with the host's `auditd` for `whodata` FIM.
+
+---
+
+## Browser Extension Monitoring
+
+The honeypot supports decoys for major browsers across all platforms.
+
+### Target Browsers & IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
+
+### Deployment Paths
+- **Chrome/Brave/Edge (Linux):** `~/.config/[browser]/Default/Local Extension Settings/[ID]`
+- **Chrome/Brave/Edge (Windows):** `%LOCALAPPDATA%\[browser]\User Data\Default\Local Extension Settings\[ID]`
+- **Firefox (Linux):** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++[ID]`
+- **Firefox (Windows):** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++[ID]`
 
 ---
 
