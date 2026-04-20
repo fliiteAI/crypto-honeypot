@@ -16,20 +16,40 @@ This document provides detailed requirements and step-by-step instructions for d
 ## System Requirements
 
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
-- **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Wazuh Manager:** Version 4.x or higher.
+- **Hardware Recommendation:** For SMB environments, a **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5** is highly recommended for running the Wazuh Manager.
+- **Wazuh Agent:** Version 4.x or higher installed on all target endpoints.
+
+### Network Requirements
+- **Port 1514 (TCP/UDP):** Required for Wazuh Agent event communication to the Manager.
+- **Port 1515 (TCP):** Required for Wazuh Agent enrollment and registration.
 
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
-- **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
+- **Packages:** `auditd` (essential for high-fidelity `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+- **Kernel Support:** Audit support must be enabled in the kernel (default on most distributions).
 
 #### Windows
 - **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
-- **Sysmon:** Recommended for enhanced process-level visibility.
+- **Sysmon:** Highly recommended for enhanced process-level visibility and correlation of file access events.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+#### Browser Extensions
+The honeypot targets the following browser extension paths (default locations):
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+**Note:** For Firefox, the honeypot uses the `moz-extension+++` naming convention to mimic authentic extension storage.
 
 ---
 
@@ -144,3 +164,29 @@ The `manifest.json` contains the private keys for the generated honeypots. **Alw
    On a Linux agent: `cat ~/.bitcoin/wallet.dat`
    On a Windows agent: `type %APPDATA%\Bitcoin\wallet.dat`
 3. **Check Wazuh Dashboard:** Confirm that a Level 12 (or higher) alert appears in the security events.
+
+---
+
+## Containerized Deployment
+
+If deploying the Wazuh Agent via Docker, ensure the following configuration to support high-fidelity monitoring:
+
+1. **Host Privileges:** The container must be run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to allow `auditd` to monitor the host filesystem from within the container.
+2. **Environment Variables:** Set `NODE_NAME` to a unique identifier for the agent.
+3. **Volumes:** Mount the host directories you wish to monitor into the container, or use a shared volume for the honeypot artifacts.
+
+Example `docker-compose.yml` snippet:
+```yaml
+services:
+  wazuh-agent:
+    image: wazuh/wazuh-agent:4.x.x
+    environment:
+      - WAZUH_MANAGER=192.168.1.100
+      - NODE_NAME=honeypot-agent-01
+    cap_add:
+      - AUDIT_CONTROL
+    pid: host
+    volumes:
+      - /home/user/.bitcoin:/home/user/.bitcoin:ro
+      - /home/user/.ethereum:/home/user/.ethereum:ro
+```
