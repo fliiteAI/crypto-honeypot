@@ -18,6 +18,9 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Recommended):**
+    - **Raspberry Pi 4 (8GB) or Raspberry Pi 5:** Ideal for SMB environments.
+    - **Storage:** High-endurance microSD card or USB 3.0 SSD (preferred).
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +33,25 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Browser Extension Paths
+The honeypot targets the following standard extension storage paths:
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+**Target Extension IDs:**
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
@@ -94,6 +116,28 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment (Docker)
+
+If running the Wazuh Agent inside a Docker container, additional privileges are required for `whodata` (auditd) support:
+
+```yaml
+services:
+  wazuh-agent:
+    image: wazuh/wazuh-agent:4.x
+    container_name: wazuh-agent-honeypot
+    privileged: true # Required for auditd access
+    cap_add:
+      - AUDIT_CONTROL
+      - AUDIT_READ
+    pid: host # Required for user attribution in audit logs
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/ossec/etc:/var/ossec/etc
+      - /home/user/honeypot:/honeypot:ro
+    environment:
+      - WAZUH_MANAGER=192.168.1.100
+```
 
 ---
 

@@ -42,7 +42,8 @@ def _base58check_encode(version: int, payload: bytes) -> str:
     """Base58Check encode with version byte."""
     versioned = bytes([version]) + payload
     checksum = _sha256(_sha256(versioned))[:4]
-    return base58.b58encode(versioned + checksum).decode("ascii")
+    encoded = base58.b58encode(versioned + checksum)
+    return str(encoded.decode("ascii"))
 
 
 def _bech32_polymod(values: list[int]) -> int:
