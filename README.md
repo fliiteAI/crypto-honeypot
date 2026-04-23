@@ -15,6 +15,8 @@ This tool generates realistic-looking (but non-funded) cryptocurrency wallet art
 | **Layer 3** | Network correlation | Exfiltration attempts (curl, scp, paste sites) after wallet access |
 | **Layer 4** | On-chain monitoring | Attacker importing stolen keys and querying/using them on-chain |
 
+Detailed information on the detection strategy can be found in the [Architecture Overview](docs/ARCHITECTURE.md).
+
 ### Supported Chains
 
 - **Bitcoin (BTC)**  `wallet.dat` (Berkeley DB format)
@@ -69,6 +71,8 @@ honeypot-deployer export-addresses \
   --output ./chain-monitor-addresses.json
 ```
 
+Refer to the [On-Chain Monitoring Guide](docs/ON_CHAIN_MONITORING.md) for instructions on setting up block explorer watchlists.
+
 ### 4. Generate Wazuh Agent Config
 
 ```bash
@@ -121,6 +125,10 @@ honeypot-deployer health-check --manifest ./honeypot-artifacts/manifest.json
 
 ```
 crypto-wallet-honeypot/
+├── docs/                        # Detailed documentation
+│   ├── ARCHITECTURE.md          # 4-layer detection strategy
+│   ├── DEPLOYMENT.md            # Hardware and OS requirements
+│   └── ON_CHAIN_MONITORING.md   # Watchlist setup guide
 ├── src/honeypot_deployer/       # Python CLI application
 │   ├── cli.py                   # Click CLI entry point
 │   ├── manifest.py              # Encrypted manifest management
@@ -181,7 +189,7 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](docs/DEPLOYMENT.md).
 
 ## Requirements
 
