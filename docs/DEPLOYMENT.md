@@ -9,14 +9,16 @@ This document provides detailed requirements and step-by-step instructions for d
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+6. [Containerized Deployment](#containerized-deployment)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
 
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
+- **Wazuh Manager:** version 4.x or higher. Recommended hardware for SMB environments: **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -82,6 +84,7 @@ honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
 #### 3. Install Audit Rules
+Audit rules must include read access monitoring (`-p r`) and the `crypto_honeypot` key for proper rule triggering:
 ```bash
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
@@ -100,6 +103,11 @@ Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot direct
 ## Honeypot Artifact Generation
 
 There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
+
+### Artifact Permissions
+To maintain realism and security, artifacts should be deployed with restricted permissions:
+- **Directories:** `700` (Owner read/write/execute)
+- **Files:** `600` (Owner read/write)
 
 ### Option A: Using the CLI (Recommended)
 The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest for high-fidelity monitoring and on-chain correlation.
@@ -131,6 +139,52 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Browser Extension Path Mappings
+
+The honeypot artifacts should be placed in the following default paths to be discovered by automated infostealers.
+
+### Linux
+| Extension | Browser | Path |
+|-----------|---------|------|
+| **MetaMask** | Chrome | `~/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/` |
+| **Phantom** | Chrome | `~/.config/google-chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/` |
+| **MetaMask** | Brave | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/` |
+| **Phantom** | Brave | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/` |
+| **Generic** | Firefox | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<RANDOM_ID>/` |
+
+### Windows
+| Extension | Browser | Path |
+|-----------|---------|------|
+| **MetaMask** | Chrome | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn\` |
+| **Phantom** | Chrome | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\bfnaelmomeimhlpmgjnjophhpkkoljpa\` |
+| **MetaMask** | Edge | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn\` |
+| **Phantom** | Edge | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\bfnaelmomeimhlpmgjnjophhpkkoljpa\` |
+| **MetaMask** | Brave | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn\` |
+
+---
+
+## Containerized Deployment
+
+To deploy the honeypot within a containerized Wazuh agent (e.g., Docker), special configuration is required for `whodata` to work correctly.
+
+### Docker Run Requirements
+- **Privileged Mode:** The container must have sufficient capabilities to interact with the host's audit system.
+- **Capabilities:** Add `--cap-add=AUDIT_CONTROL` and `--cap-add=AUDIT_READ`.
+- **PID Namespace:** Use `--pid=host` to allow the agent to see host-level processes.
+
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --cap-add=AUDIT_READ \
+  --pid=host \
+  -v /var/ossec/etc:/var/ossec/etc \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  wazuh/wazuh-agent:latest
+```
 
 ---
 
