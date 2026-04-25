@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Network Requirements](#network-requirements)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Containerized Deployment](#containerized-deployment)
+8. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +21,11 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Hardware Recommendations (Wazuh Manager)
+For SMB environments, we recommend running the Wazuh Manager on:
+- **Raspberry Pi 4 (8GB RAM)** or **Raspberry Pi 5**.
+- High-endurance microSD card or USB 3.0 SSD for storage.
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +38,19 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Network Requirements
+
+The following ports must be open between the Wazuh Agents and the Wazuh Manager:
+
+| Port | Protocol | Description |
+|------|----------|-------------|
+| 1514 | TCP/UDP  | Agent event communication (Secure Messaging) |
+| 1515 | TCP      | Agent enrollment |
+
+If you are using Wazuh Active Response or remote commands, ensure bidirectional connectivity on port 1514.
 
 ---
 
@@ -76,7 +97,14 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block.
+
+For multi-user systems, you can use wildcards in the configuration:
+```xml
+<directories check_all="yes" whodata="yes" realtime="yes" report_changes="yes">/home/*/.bitcoin</directories>
+```
+
+You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one based on your manifest:
 ```bash
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
@@ -94,6 +122,31 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Path Mappings
+
+Infostealers target specific directories where browser extensions store their local data. Deploying honeypot artifacts to these locations maximizes the chance of detection.
+
+### Common Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
+
+### Linux Paths
+- **Chrome:** `~/.config/google-chrome/Default/Local Extension Settings/<ID>`
+- **Brave:** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/<ID>`
+- **Edge:** `~/.config/microsoft-edge/Default/Local Extension Settings/<ID>`
+- **Firefox:** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>`
+
+### Windows Paths
+- **Chrome:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>`
+- **Brave:** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\<ID>`
+- **Edge:** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>`
+- **Firefox:** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++<ID>`
 
 ---
 
@@ -129,8 +182,18 @@ chmod +x deploy.sh
 .\deploy.ps1
 ```
 
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+---
+
+## Containerized Deployment
+
+If you are running the Wazuh Agent inside a Docker container, ensure the following:
+
+1. **Volume Mounting:** Mount the host's honeypot paths into the container.
+2. **Auditd Support:** The container must have access to the host's audit system. Run the container with:
+   ```bash
+   docker run --cap-add=AUDIT_CONTROL --pid=host ...
+   ```
+3. **Environment Variables:** Set the `NODE_NAME` to distinguish between multiple containerized agents.
 
 ---
 
