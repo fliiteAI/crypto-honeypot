@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Network Requirements](#network-requirements)
+3. [Browser Extension Paths](#browser-extension-paths)
+4. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+5. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Docker Deployment](#docker-deployment)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -17,6 +20,7 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+- **Hardware (Recommended):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 for SMB environments.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -30,6 +34,40 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Network Requirements
+
+The following ports must be open between the Wazuh Agents and the Wazuh Manager:
+
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| **1514** | TCP/UDP | Agent event communication |
+| **1515** | TCP | Agent enrollment |
+| **55000** | TCP | Wazuh API (optional, for management) |
+
+Ensure your firewall (iptables, ufw, or Windows Firewall) allows this traffic.
+
+---
+
+## Browser Extension Paths
+
+The honeypot targets several popular crypto wallet extensions. Below are the default local storage paths where artifacts should be deployed to be found by infostealers.
+
+### Chrome / Edge / Brave (Chromium-based)
+- **Linux:** `~/.config/[browser]/Default/Local Extension Settings/[extension_id]`
+- **Windows:** `%LOCALAPPDATA%\[browser]\User Data\Default\Local Extension Settings\[extension_id]`
+- **macOS:** `~/Library/Application Support/[browser]/Default/Local Extension Settings/[extension_id]`
+
+**Extension IDs:**
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+
+### Firefox
+- **Linux:** `~/.mozilla/firefox/[profile].default-release/storage/default/moz-extension+++[uuid]`
+- **Windows:** `%APPDATA%\Mozilla\Firefox\Profiles\[profile].default-release\storage\default\moz-extension+++[uuid]`
 
 ---
 
@@ -94,6 +132,21 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Docker Deployment
+
+To run a Wazuh agent within a Docker container while maintaining honeypot monitoring:
+
+1.  **Mount Artifacts:** Ensure the honeypot artifacts are mounted as volumes.
+2.  **Enable Auditing:** The container must have elevated privileges to interact with the host's audit system.
+    ```bash
+    docker run -d --name wazuh-agent \
+      --cap-add=AUDIT_CONTROL \
+      --pid=host \
+      -v /path/to/honeypot:/mnt/honeypot:ro \
+      -e WAZUH_MANAGER="192.168.1.100" \
+      wazuh/wazuh-agent:latest
+    ```
 
 ---
 
