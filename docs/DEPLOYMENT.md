@@ -18,6 +18,10 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Manager):** Raspberry Pi 4 (8GB) or 5 is highly recommended for SMB environments.
+- **Network:**
+    - Port **1514** (TCP/UDP) must be open for agent-manager event communication.
+    - Port **1515** (TCP) must be open for agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +34,12 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Containerized Deployment
+If deploying the Wazuh agent within a Docker container:
+- **Privileges:** The container must be run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to support high-fidelity `whodata` monitoring via `auditd`.
+- **Volumes:** Mount persistent volumes for artifact storage and Wazuh configuration to ensure persistence across container restarts.
+- **Environment:** Pass the `NODE_NAME` environment variable to uniquely identify the agent in the Wazuh dashboard.
 
 ---
 
@@ -67,6 +77,18 @@ systemctl restart wazuh-manager
 
 ## Wazuh Agent Configuration
 
+The agent configuration can be performed automatically using the `honeypot-deployer` CLI or manually using pre-defined templates.
+
+### Automated Configuration (Recommended)
+Use the `wazuh-config` command to generate localized FIM configuration snippets based on the actual artifacts listed in your deployment manifest:
+
+```bash
+honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux --output ./wazuh-config.xml
+```
+
+### Manual Configuration
+Alternatively, you can manually copy templates from the `wazuh/agent-config/` directory.
+
 ### Linux Setup
 
 #### 1. Install Auditd
@@ -76,10 +98,11 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
-```bash
-honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
-```
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. Use the following attributes for optimal detection:
+- `realtime="yes"`
+- `whodata="yes"` (requires `auditd`)
+- `check_all="yes"`
+- `report_changes="yes"`
 
 #### 3. Install Audit Rules
 ```bash
@@ -94,6 +117,38 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Decoy Paths
+
+To effectively trigger infostealers, decoys must be placed in the specific directories where browsers store extension data.
+
+### Chrome, Edge, and Brave (Chromium-based)
+These browsers use a similar LevelDB-based storage structure.
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+
+### Firefox
+Firefox uses IndexedDB for extension storage, typically within profile-specific directories.
+
+| Browser | OS | Path Pattern |
+|---------|----|--------------|
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>^userContextId=<N>/idb/` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++<ID>^userContextId=<N>\idb\` |
+
+### Supported Extension IDs
+The honeypot currently supports decoys for:
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
