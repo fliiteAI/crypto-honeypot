@@ -9,7 +9,10 @@ This document provides detailed requirements and step-by-step instructions for d
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Containerized Deployment (Docker)](#containerized-deployment-docker)
+6. [Network Requirements](#network-requirements)
+7. [Standard Monitoring Paths](#standard-monitoring-paths)
+8. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +21,7 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Manager):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is recommended for SMB environments.
 
 ### Endpoint Requirements
 #### Linux
@@ -129,8 +133,62 @@ chmod +x deploy.sh
 .\deploy.ps1
 ```
 
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+---
+
+## Containerized Deployment (Docker)
+
+To deploy the Wazuh agent and honeypot artifacts within a Docker container:
+
+1. **Run with elevated privileges:** High-fidelity `whodata` monitoring requires auditd access.
+   ```bash
+   docker run -d --name wazuh-agent \
+     --cap-add=AUDIT_CONTROL \
+     --pid=host \
+     -e WAZUH_MANAGER='192.168.1.100' \
+     -e NODE_NAME='prod-web-server' \
+     -v /path/to/artifacts:/mnt/honeypot:ro \
+     wazuh/wazuh-agent:4.x
+   ```
+2. **Mount Persistent Storage:** Ensure honeypot artifacts are mounted into the container at the paths monitored by the Wazuh agent.
+
+---
+
+## Network Requirements
+
+The following ports must be open between the Wazuh Agents and the Wazuh Manager:
+
+| Port | Protocol | Description |
+|------|----------|-------------|
+| 1514 | TCP/UDP  | Agent event communication |
+| 1515 | TCP      | Agent enrollment and keep-alive |
+
+---
+
+## Standard Monitoring Paths
+
+The system is pre-configured to monitor common wallet locations.
+
+### Windows Paths
+- **Bitcoin:** `%APPDATA%\Bitcoin\wallet.dat`
+- **Ethereum:** `%APPDATA%\Ethereum\keystore`
+- **Electrum:** `%APPDATA%\Electrum\wallets\default_wallet`
+- **Exodus:** `%APPDATA%\Exodus\exodus.wallet`
+- **Browser Extensions:** `%LOCALAPPDATA%\<Browser>\User Data\Default\Local Extension Settings\<ExtensionID>`
+
+### Linux Paths
+- **Bitcoin:** `~/.bitcoin/wallet.dat`
+- **Ethereum:** `~/.ethereum/keystore/`
+- **Solana:** `~/.config/solana/id.json`
+- **Electrum:** `~/.electrum/wallets/default_wallet`
+- **Exodus:** `~/.config/Exodus/exodus.wallet/seed.secur`
+- **Browser Extensions:** `~/.config/<browser>/Default/Local Extension Settings/<ExtensionID>`
+
+### Monitored Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 

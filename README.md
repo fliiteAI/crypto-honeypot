@@ -6,6 +6,8 @@ A defensive crypto wallet honeypot system for detecting attackers targeting cryp
 
 This tool generates realistic-looking (but non-funded) cryptocurrency wallet artifacts and deploys them across monitored endpoints. When an attacker whether an infostealer, malware or a manual intruder, accesses these honeypot files, Wazuh detects the activity and fires high-fidelity alerts with zero false positives.
 
+For more details on how it works, see the [Architecture Overview](docs/ARCHITECTURE.md).
+
 ### Detection Layers
 
 | Layer | Mechanism | What It Detects |
@@ -69,6 +71,8 @@ honeypot-deployer export-addresses \
   --output ./chain-monitor-addresses.json
 ```
 
+Refer to the [On-Chain Monitoring Guide](docs/ON_CHAIN_MONITORING.md) for instructions on setting up watchlists.
+
 ### 4. Generate Wazuh Agent Config
 
 ```bash
@@ -100,16 +104,9 @@ systemctl restart wazuh-manager
 
 ### 6. Configure Wazuh Agents
 
-On each monitored endpoint, add the FIM configuration to the agent's `ossec.conf`:
+On each monitored endpoint, add the FIM configuration to the agent's `ossec.conf`.
 
-```bash
-# Linux
-# Add contents of wazuh/agent-config/ossec-honeypot-fim.conf to /var/ossec/etc/ossec.conf
-
-# Install audit rules
-cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
-auditctl -R /etc/audit/rules.d/honeypot.rules
-```
+Detailed instructions for Linux and Windows can be found in the [Deployment Guide](docs/DEPLOYMENT.md).
 
 ### 7. Health Check
 
@@ -121,20 +118,17 @@ honeypot-deployer health-check --manifest ./honeypot-artifacts/manifest.json
 
 ```
 crypto-wallet-honeypot/
+├── docs/                        # Detailed documentation
+│   ├── ARCHITECTURE.md          # Multi-layer detection strategy
+│   ├── DEPLOYMENT.md            # Installation & OS requirements
+│   └── ON_CHAIN_MONITORING.md   # Watchlist setup guide
 ├── src/honeypot_deployer/       # Python CLI application
 │   ├── cli.py                   # Click CLI entry point
 │   ├── manifest.py              # Encrypted manifest management
 │   └── generators/              # Chain-specific key & artifact generators
-│       ├── btc.py               # Bitcoin wallet.dat
-│       ├── eth.py               # Ethereum keystore + .env
-│       ├── sol.py               # Solana id.json
-│       ├── xrp.py               # XRP wallet export
-│       ├── ada.py               # Cardano .skey
-│       ├── seed.py              # BIP-39 canary seed phrases
-│       └── browser.py           # Browser extension decoys
 ├── wazuh/                       # Wazuh SIEM configuration
 │   ├── decoders/                # Custom log decoders
-│   ├── rules/                   # Custom alert rules (15+ rules, 4 detection layers)
+│   ├── rules/                   # Custom alert rules
 │   ├── agent-config/            # Agent FIM, audit, and Sysmon templates
 │   └── active-response/         # Forensic snapshot script
 ├── pyproject.toml               # Python project configuration
@@ -158,30 +152,12 @@ crypto-wallet-honeypot/
 | 100532 | 15 | Outbound transfer from honeypot address |
 | 100540 | 15 | Correlated file + chain activity |
 
-## MITRE ATT&CK Coverage
-
-| Technique | Name | Detection Layer |
-|-----------|------|-----------------|
-| T1083 | File and Directory Discovery | Layer 1, 2 |
-| T1005 | Data from Local System | Layer 1 |
-| T1555 | Credentials from Password Stores | Layer 1 |
-| T1555.003 | Credentials from Web Browsers | Layer 1 |
-| T1560 | Archive Collected Data | Layer 2, 3 |
-| T1041 | Exfiltration Over C2 Channel | Layer 3 |
-| T1048 | Exfiltration Over Alternative Protocol | Layer 3 |
-| T1657 | Financial Theft | Layer 4 |
-| T1070 | Indicator Removal | Layer 1 |
-
 ## Security Notes
 
 - Generated honeypot keys are **non-funded** by default. Never deposit real funds.
 - The manifest can be AES-encrypted at rest with a user-provided password.
 - Private keys exist only in the manifest and the deployed artifacts -- they are never transmitted.
 - All detection relies on the principle that **legitimate users never access honeypot files**.
-
-## Documentation
-
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
 
 ## Requirements
 
