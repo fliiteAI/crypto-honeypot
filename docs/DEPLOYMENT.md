@@ -17,7 +17,12 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+    - **Recommended Hardware:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Connectivity Requirements
+- **Port 1514 (TCP/UDP):** Agent event communication.
+- **Port 1515 (TCP):** Agent enrollment and registration.
 
 ### Endpoint Requirements
 #### Linux
@@ -87,6 +92,12 @@ cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
 
+### Containerized Deployment
+When deploying the Wazuh Agent in a container (e.g., Docker), ensure the following:
+- **Elevated Privileges:** Run the container with `--cap-add=AUDIT_CONTROL` and `--pid=host` to allow `auditd` to monitor host-level file access.
+- **Environment Variables:** Set `NODE_NAME` to a unique identifier for the containerized agent.
+- **Persistent Storage:** Mount volumes for artifact storage to ensure honeypot files persist across container restarts.
+
 ### Windows Setup
 
 #### 1. Install Sysmon (Recommended)
@@ -114,6 +125,9 @@ honeypot-deployer generate --output ./my-artifacts
 # 3. View the generated manifest
 honeypot-deployer show --manifest ./my-artifacts/manifest.json
 ```
+
+### Browser Extension Decoys
+Honeypot browser extension decoys mimic realistic structures. For Firefox, honeyfolders are deployed within profile storage directories and utilize the `moz-extension+++` naming convention for decoy folders (e.g., `storage/default/moz-extension+++<EXTENSION_ID>`).
 
 ### Option B: Standalone Scripts
 For quick deployments without installing the Python package, you can use the provided shell and PowerShell scripts. These create a standard set of honeyfiles.
