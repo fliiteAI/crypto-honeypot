@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Browser Extension Monitoring](#browser-extension-monitoring)
+5. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+6. [Containerized Deployment](#containerized-deployment)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -30,6 +33,17 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, we recommend running the Wazuh Manager on dedicated hardware to ensure performance and reliability.
+
+### Recommended Hardware: Raspberry Pi
+- **Model:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** 64GB+ High-endurance microSD card or USB 3.0 SSD (preferred).
+- **OS:** Raspberry Pi OS 64-bit (Lite) or Ubuntu Server 22.04 LTS.
 
 ---
 
@@ -90,10 +104,32 @@ sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ### Windows Setup
 
 #### 1. Install Sysmon (Recommended)
-Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) with a configuration that includes the rules in `wazuh/agent-config/honeypot-sysmon.xml`.
+Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon). Use the provided Sysmon configuration template:
+```bash
+# Apply sysmon config (if using our template)
+sysmon.exe -i wazuh/agent-config/honeypot-sysmon.xml
+```
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Monitoring
+
+The honeypot targets common wallet extensions. Ensure the following paths are monitored in your Wazuh FIM configuration:
+
+| Extension | Chrome ID | Browser |
+|-----------|-----------|---------|
+| **MetaMask** | `nkbihfbeogaeaoehlefnkodbefgpgknn` | Chrome, Edge, Brave |
+| **Phantom** | `bfnaelmomeimhlpmgjnjophhpkkoljpa` | Chrome, Edge, Brave |
+| **Coinbase** | `hnfanknocfeofbddgcijnmhnfnkdnaad` | Chrome, Edge, Brave |
+
+### Path Examples
+- **Chrome (Linux):** `~/.config/google-chrome/Default/Local Extension Settings/<ID>`
+- **Brave (Linux):** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/<ID>`
+- **Edge (Windows):** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>`
+- **Firefox (Linux):** `~/.mozilla/firefox/<profile>/storage/default/moz-extension+++<UUID>`
 
 ---
 
@@ -131,6 +167,28 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Containerized Deployment
+
+If you are running the Wazuh agent within a Docker container, ensure the following:
+
+1. **Volume Mounts:** Mount the host directories you want to monitor into the container.
+   ```yaml
+   volumes:
+     - /home:/host/home:ro
+     - /var/ossec/etc:/var/ossec/etc
+   ```
+2. **Auditd Support:** To enable `whodata` monitoring in a container, the container must have access to the host's audit system.
+   ```yaml
+   cap_add:
+     - AUDIT_CONTROL
+     - AUDIT_READ
+   network_mode: host
+   pid: host
+   ```
+3. **Environment Variables:** Set `NODE_NAME` to distinguish between multiple containerized agents.
 
 ---
 
