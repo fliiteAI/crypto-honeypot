@@ -18,6 +18,10 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (Recommended for SMB):** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Network Connectivity:**
+    - Port 1514 (TCP/UDP): Wazuh agent event communication.
+    - Port 1515 (TCP): Wazuh agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -87,6 +91,19 @@ cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
 
+### Containerized Deployment (Docker)
+To run a Wazuh agent within a container with high-fidelity `whodata` support, use the following Docker flags:
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="manager-ip" \
+  -e NODE_NAME="honeypot-node" \
+  -v /path/to/artifacts:/var/honeypot/artifacts \
+  wazuh/wazuh-agent:latest
+```
+
 ### Windows Setup
 
 #### 1. Install Sysmon (Recommended)
@@ -94,6 +111,19 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Path Mappings
+Honeypot artifacts for browser extensions should be deployed in the following locations depending on the browser and OS:
+
+| Browser | OS | Path Template |
+|---------|----|---------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/<ID>` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\<ID>` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>` |
+
+*Note: Replace `<ID>` with the specific extension ID (e.g., MetaMask: `nkbihfbeogaeaoehlefnkodbefgpgknn`).*
 
 ---
 
