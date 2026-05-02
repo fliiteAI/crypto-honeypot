@@ -15,6 +15,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## System Requirements
 
+### Hardware Recommendations
+- **Wazuh Manager:** Raspberry Pi 4 (8GB RAM) or Raspberry Pi 5.
+- **Wazuh Agent:** Any modern Linux or Windows system.
+
+### Network Connectivity
+The following ports must be open on the Wazuh Manager to allow agent communication:
+- **1514 (TCP/UDP):** Agent event communication.
+- **1515 (TCP):** Agent enrollment.
+
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
@@ -94,6 +103,43 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment (Docker)
+
+To run the Wazuh agent in a container while maintaining high-fidelity `whodata` monitoring:
+
+1. **Privileged Mode:** The container must run with `--cap-add=AUDIT_CONTROL` and `--pid=host` to interact with the host's `auditd` system.
+2. **Environment Variables:** Set `NODE_NAME` to uniquely identify the agent in the Wazuh Manager.
+3. **Volume Mounts:** Ensure honeypot artifact directories are mounted into the container if you want to monitor host files from within the container.
+
+Example command:
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -e NODE_NAME="prod-web-server" \
+  wazuh/wazuh-agent:latest
+```
+
+---
+
+## Path Mappings
+
+The honeypot system targets standard locations where wallets and browser extensions store sensitive data.
+
+### Linux Paths
+- **Bitcoin:** `~/.bitcoin/wallet.dat`
+- **Ethereum:** `~/.ethereum/keystore/`
+- **Solana:** `~/.config/solana/id.json`
+- **Exodus:** `~/.config/Exodus/exodus.wallet/seed.secur`
+- **MetaMask (Chrome):** `~/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/`
+
+### Windows Paths
+- **Bitcoin:** `%APPDATA%\Bitcoin\wallet.dat`
+- **Ethereum:** `%APPDATA%\Ethereum\keystore\`
+- **Electrum:** `%APPDATA%\Electrum\wallets\default_wallet`
+- **MetaMask (Chrome):** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn\`
 
 ---
 
