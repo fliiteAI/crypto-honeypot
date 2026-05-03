@@ -8,16 +8,24 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment](#containerized-deployment)
+4. [Wallet & Extension Path Mappings](#wallet--extension-path-mappings)
+5. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
 
+### Hardware Recommendations (SMB)
+For Small to Medium Businesses (SMBs), we recommend running the Wazuh Manager on a dedicated **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**. This provides a cost-effective, low-power, yet capable SIEM hub.
+
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Connectivity:** Ensure the following ports are open on the Wazuh Manager:
+    - `1514/TCP/UDP`: Agent event communication.
+    - `1515/TCP`: Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -94,6 +102,39 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment
+When deploying a Wazuh agent inside a Docker container to monitor a containerized application:
+- Run the container with `--cap-add=AUDIT_CONTROL` to allow the agent to manage audit rules.
+- Use `--pid=host` to allow the agent to see processes running on the host for better correlation.
+- Mount the artifact directory as a volume.
+
+---
+
+## Wallet & Extension Path Mappings
+
+The honeypot artifacts should be deployed to the following standard paths to ensure they are discovered by infostealers.
+
+### Linux Paths
+- **Bitcoin:** `~/.bitcoin/wallet.dat`
+- **Ethereum:** `~/.ethereum/keystore/`
+- **Solana:** `~/.config/solana/id.json`
+- **Electrum:** `~/.electrum/wallets/default_wallet`
+- **Exodus:** `~/.config/Exodus/exodus.wallet/seed.secur`
+- **Browser Extensions (Chrome/Brave/Edge):** `~/.config/[browser]/Default/Local Extension Settings/[extension_id]`
+
+### Windows Paths
+- **Bitcoin:** `%APPDATA%\Bitcoin\wallet.dat`
+- **Ethereum:** `%APPDATA%\Ethereum\keystore`
+- **Electrum:** `%APPDATA%\Electrum\wallets\default_wallet`
+- **Exodus:** `%APPDATA%\Exodus\exodus.wallet`
+- **Browser Extensions:** `%LOCALAPPDATA%\[browser]\User Data\Default\Local Extension Settings\[extension_id]`
+
+### Monitored Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
 
 ---
 
