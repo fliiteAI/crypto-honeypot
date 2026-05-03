@@ -181,7 +181,11 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+For detailed guides on how to deploy and manage the honeypot system, please refer to the following documents:
+
+- **[Deployment Guide](docs/DEPLOYMENT.md)**: Hardware/OS requirements and step-by-step setup.
+- **[Architecture Overview](docs/ARCHITECTURE.md)**: Details on the 4-layer detection strategy and MITRE ATT&CK mapping.
+- **[On-Chain Monitoring](docs/ON_CHAIN_MONITORING.md)**: How to track honeypot addresses on block explorers.
 
 ## Requirements
 
