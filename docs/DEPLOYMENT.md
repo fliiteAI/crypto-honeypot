@@ -4,12 +4,16 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Network Requirements](#network-requirements)
+4. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+5. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Browser Extension Paths](#browser-extension-paths)
+6. [Containerized Deployment](#containerized-deployment)
+7. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+8. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -30,6 +34,23 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, we recommend running the Wazuh Manager on dedicated hardware:
+- **Primary Choice:** Raspberry Pi 5 (8GB RAM) with NVMe SSD.
+- **Secondary Choice:** Raspberry Pi 4 Model B (8GB RAM).
+- **Storage:** High-endurance microSD (Class 10) or preferably an SSD via USB 3.0/NVMe.
+
+---
+
+## Network Requirements
+
+Ensure the following ports are open between the Wazuh Agents and the Wazuh Manager:
+- **1514 (TCP/UDP):** Agent events communication.
+- **1515 (TCP):** Agent enrollment.
 
 ---
 
@@ -94,6 +115,57 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+### Browser Extension Paths
+
+The honeypot targets common paths used by info-stealers. Ensure your FIM configuration includes these locations:
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
+
+---
+
+## Containerized Deployment
+
+When running the Wazuh Agent in a Docker container, additional privileges are required for `auditd` (whodata) support.
+
+### Docker Run
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER='manager_ip' \
+  -e NODE_NAME='agent_name' \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /dev:/dev \
+  wazuh/wazuh-agent:latest
+```
+
+### Docker Compose
+```yaml
+services:
+  wazuh-agent:
+    image: wazuh/wazuh-agent:latest
+    environment:
+      - WAZUH_MANAGER=manager_ip
+      - NODE_NAME=agent_name
+    cap_add:
+      - AUDIT_CONTROL
+    pid: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /dev:/dev
+    restart: always
+```
 
 ---
 
