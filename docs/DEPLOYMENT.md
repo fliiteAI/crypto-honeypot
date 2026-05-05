@@ -8,12 +8,23 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
+    - [Containerized Deployment](#containerized-deployment)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
 5. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
+
+### Hardware Recommendations
+For SMB environments, we recommend running the Wazuh Manager on dedicated hardware:
+- **Recommended:** Raspberry Pi 4 (8GB RAM) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card or USB 3.0 SSD (preferred).
+
+### Network Requirements
+Ensure the following ports are open on the Wazuh Manager to allow agent communication:
+- **Port 1514 (TCP/UDP):** Agent event communication.
+- **Port 1515 (TCP):** Agent enrollment.
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
@@ -87,6 +98,10 @@ cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
 
+#### Firefox Extension Monitoring
+Firefox uses a different storage structure than Chrome. Ensure you monitor the following path pattern:
+`~/.mozilla/firefox/*.default*/storage/default/moz-extension+++*`
+
 ### Windows Setup
 
 #### 1. Install Sysmon (Recommended)
@@ -94,6 +109,27 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Containerized Deployment
+
+When running the Wazuh agent inside a container, additional privileges are required for high-fidelity monitoring:
+
+1. **Audit Support:** The container must be started with `--cap-add=AUDIT_CONTROL` to allow the agent to manage audit rules.
+2. **User Attribution:** Use `--pid=host` to ensure the agent can correctly attribute file access to host-level processes and users.
+3. **Environment Variables:** Pass the `NODE_NAME` environment variable to uniquely identify the container in the Wazuh dashboard.
+
+Example Docker run command:
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e NODE_NAME='prod-web-server' \
+  -v /path/to/honeypots:/mnt/honeypots:ro \
+  wazuh/wazuh-agent:latest
+```
 
 ---
 
