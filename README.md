@@ -181,7 +181,7 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](docs/DEPLOYMENT.md).
 
 ## Requirements
 
