@@ -8,8 +8,10 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
+    - [Containerized Setup (Docker)](#containerized-setup-docker)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Path Mapping](#browser-extension-path-mapping)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +20,11 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Hardware Recommendations (SMB)
+For small to medium business environments, we recommend running the Wazuh Manager on dedicated hardware:
+- **Recommended:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-speed microSD (Class 10) or USB 3.0 SSD.
 
 ### Endpoint Requirements
 #### Linux
@@ -95,6 +102,23 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Containerized Setup (Docker)
+
+To run a Wazuh agent with honeypot monitoring inside a container, you must grant it specific host-level privileges to allow `auditd` integration.
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  wazuh/wazuh-agent:latest
+```
+
+- `--cap-add=AUDIT_CONTROL`: Allows the container to manage Linux Audit rules.
+- `--pid=host`: Required for user attribution to work correctly inside the container.
+
 ---
 
 ## Honeypot Artifact Generation
@@ -129,8 +153,23 @@ chmod +x deploy.sh
 .\deploy.ps1
 ```
 
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+---
+
+## Browser Extension Path Mapping
+
+The `honeypot-deployer` creates decoy folders that mimic popular crypto browser extensions. For maximum effectiveness, ensure these are placed in the correct profile directories.
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\<profile>\storage\default\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/<profile>/storage/default/` |
+
+### Firefox Special Note
+Firefox uses a different naming convention for extension storage. The honeypot generator automatically creates folders using the `moz-extension+++<UUID>` format to stay stealthy.
 
 ---
 
