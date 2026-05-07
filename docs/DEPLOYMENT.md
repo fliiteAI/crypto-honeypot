@@ -19,6 +19,12 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
+#### Hardware Recommendations (Wazuh Manager)
+For SMB environments, the Wazuh Manager can be deployed on cost-effective ARM-based hardware:
+- **Recommended:** Raspberry Pi 5 (8GB RAM) with NVMe SSD storage.
+- **Minimum:** Raspberry Pi 4 (8GB RAM) with high-speed microSD (Class 10/UHS-1).
+- **Storage:** Minimum 64GB (SSD strongly preferred for IOPS required by indexing).
+
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
@@ -94,6 +100,47 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Browser Extension Path Mappings
+
+The honeypot targets specific browser extension IDs. Ensure the following paths (including wildcards for user profiles) are monitored by FIM:
+
+| Browser | OS | Path Template |
+|---------|----|---------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/<ID>/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<ID>\` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\<ID>\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<ID>/` |
+
+**Monitored Extension IDs:**
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+
+---
+
+## Containerized Deployment (Docker)
+
+When running the Wazuh agent inside a container, special configuration is required to support high-fidelity `whodata` monitoring via `auditd`.
+
+### Docker Run Configuration
+The container must have access to the host's audit system:
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e NODE_NAME='crypto-honeypot-container' \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  wazuh/wazuh-agent:latest
+```
+
+### Limitations
+- **User Attribution:** Inside a container, `whodata` may report the UID/GID instead of the username if the user does not exist within the container's `/etc/passwd`.
+- **Audit Rules:** Audit rules must be loaded on the **host** machine, even if the files being monitored are inside a container volume.
 
 ---
 
