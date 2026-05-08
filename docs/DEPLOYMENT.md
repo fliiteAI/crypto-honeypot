@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Network Connectivity](#network-connectivity)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment (Docker)](#containerized-deployment-docker)
+5. [Browser Extension Monitoring](#browser-extension-monitoring)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -17,6 +20,7 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+    - **Recommended Hardware:** Raspberry Pi 4 (8GB) or Raspberry Pi 5 for SMB environments.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
@@ -30,6 +34,17 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Network Connectivity
+
+The following ports must be open on the Wazuh Manager to allow communication from the agents:
+
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| 1514 | TCP/UDP  | Agent event communication |
+| 1515 | TCP      | Agent enrollment |
 
 ---
 
@@ -81,6 +96,11 @@ Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<sy
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
+Ensure `whodata="yes"` is set for the monitored directories:
+```xml
+<directories realtime="yes" whodata="yes" check_all="yes" report_changes="yes">/home/*/.bitcoin</directories>
+```
+
 #### 3. Install Audit Rules
 ```bash
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
@@ -94,6 +114,49 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment (Docker)
+
+To deploy the Wazuh agent in a container while maintaining high-fidelity monitoring (Auditd/Whodata), the container must be run with elevated privileges.
+
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e NODE_NAME='prod-web-server' \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /dev:/dev \
+  wazuh/wazuh-agent:4.x
+```
+
+---
+
+## Browser Extension Monitoring
+
+The honeypot can deploy decoys for popular browser extensions. Below are the extension IDs and typical monitoring paths.
+
+### Monitored Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
+
+### Extension Paths
+
+#### Chrome-based (Chrome, Edge, Brave)
+Paths usually end in `Local Extension Settings/<ExtensionID>`.
+
+- **Chrome (Linux):** `~/.config/google-chrome/Default/Local Extension Settings/`
+- **Chrome (Windows):** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\`
+- **Edge (Windows):** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\`
+- **Brave (Windows):** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\`
+
+#### Firefox
+Firefox uses IndexedDB for extension storage, typically located in the profile directory.
+- **Linux:** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<UUID>`
+- **Windows:** `%APPDATA%\Mozilla\Firefox\Profiles\<profile>\storage\default\moz-extension+++<UUID>`
 
 ---
 
