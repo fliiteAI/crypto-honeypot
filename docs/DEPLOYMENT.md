@@ -17,7 +17,11 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+- **Hardware (Recommended):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 for SMB environments.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Network Ports:**
+  - `1514 (TCP/UDP)`: Agent event communication.
+  - `1515 (TCP)`: Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -62,6 +66,37 @@ Configure the active response in your `ossec.conf` on the manager.
 ```bash
 systemctl restart wazuh-manager
 ```
+
+---
+
+## Browser Extension Path Mappings
+
+The honeypot deployer places decoys in standard locations where infostealers look for wallet data.
+
+### Chrome / Edge / Brave (Chromium-based)
+On Chromium browsers, wallet data is stored in `Local Extension Settings`.
+
+| Browser | OS | Path Template |
+|---------|----|---------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/<EXT_ID>/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<EXT_ID>\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\<EXT_ID>\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/<EXT_ID>/` |
+
+### Firefox
+Firefox uses IndexedDB for extension storage.
+
+| OS | Path Template |
+|----|---------------|
+| **Linux** | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<RANDOM_ID>^userContextId=<ID>/idb/` |
+| **Windows** | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++<RANDOM_ID>^userContextId=<ID>\idb\` |
+
+### Supported Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
@@ -131,6 +166,32 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Containerized Deployment (Docker)
+
+When running the Wazuh agent in a container, additional configuration is required to support `whodata` monitoring.
+
+### 1. Run Configuration
+The container must have access to the host's audit system.
+
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -e WAZUH_AGENT_NAME="my-container-agent" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /dev:/dev \
+  wazuh/wazuh-agent:4.x
+```
+
+### 2. Volume Mounts for Artifacts
+Ensure the honeypot artifacts are mounted into the container if they are generated on the host:
+```bash
+  -v /path/to/honeypot-artifacts:/root/honeypot-artifacts:ro
+```
 
 ---
 
