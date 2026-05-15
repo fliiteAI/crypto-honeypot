@@ -181,15 +181,17 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+For detailed information on architecture, deployment, and monitoring, please refer to the following guides:
 
-## Requirements
+- [**Architecture Overview**](docs/ARCHITECTURE.md): Learn about the 4-layer detection strategy and MITRE ATT&CK mapping.
+- [**Deployment Guide**](docs/DEPLOYMENT.md): Detailed installation instructions, system requirements, and OS-specific setup.
+- [**On-Chain Monitoring**](docs/ON_CHAIN_MONITORING.md): Guide for tracking stolen honeypot keys on the blockchain.
+
+## Quick Requirements
 
 - **Python:** 3.10+
 - **Wazuh:** 4.x (Manager + Agent)
-- **Linux:** `auditd` (required for high-fidelity `whodata` FIM)
-- **Windows:** Sysmon (recommended for process-level visibility)
-- **Hardware:** Raspberry Pi 4/5 (recommended for Wazuh Manager in SMB environments)
+- **Hardware:** Raspberry Pi 4/5 (recommended for Wazuh Manager)
 
 ## License
 
