@@ -121,6 +121,7 @@ honeypot-deployer health-check --manifest ./honeypot-artifacts/manifest.json
 
 ```
 crypto-wallet-honeypot/
+├── docs/                        # Detailed documentation
 ├── src/honeypot_deployer/       # Python CLI application
 │   ├── cli.py                   # Click CLI entry point
 │   ├── manifest.py              # Encrypted manifest management
@@ -181,7 +182,9 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+- [Architecture Overview](docs/ARCHITECTURE.md) - Deep dive into the 4-layer detection strategy.
+- [Deployment Guide](docs/DEPLOYMENT.md) - Detailed installation and setup instructions.
+- [On-Chain Monitoring](docs/ON_CHAIN_MONITORING.md) - Guide for tracking honeypot activity on the blockchain.
 
 ## Requirements
 

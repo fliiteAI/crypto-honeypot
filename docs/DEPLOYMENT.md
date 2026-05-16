@@ -8,8 +8,10 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment (Docker)](#containerized-deployment-docker)
+4. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+5. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +20,10 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Hardware (SMB Recommendation):** Raspberry Pi 4 (8GB) or Raspberry Pi 5 is highly recommended for running the Wazuh Manager in small to medium business environments.
+- **Connectivity:**
+  - Port **1514 (TCP/UDP)**: For agent event communication.
+  - Port **1515 (TCP)**: For agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
@@ -94,6 +100,50 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment (Docker)
+To deploy the Wazuh agent in a container while maintaining high-fidelity monitoring (including `whodata` via `auditd`), the container must be run with elevated privileges.
+
+**Docker Run Configuration:**
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER="manager-ip" \
+  -e NODE_NAME="honeypot-node-01" \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /dev:/dev \
+  wazuh/wazuh-agent:latest
+```
+Note: `--cap-add=AUDIT_CONTROL` and `--pid=host` are required for the agent to interact with the host's audit system.
+
+---
+
+## Browser Extension Path Mappings
+
+The honeypot targets common storage locations for crypto wallet extensions across multiple browsers.
+
+### Linux Paths
+| Browser | Path |
+|---------|------|
+| **Chrome** | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Brave** | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Firefox** | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+### Windows Paths
+| Browser | Path |
+|---------|------|
+| **Chrome** | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
+
+### Monitored Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
