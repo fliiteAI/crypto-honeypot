@@ -15,18 +15,24 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## System Requirements
 
+### Hardware Recommendations
+For Small and Medium Businesses (SMBs), we recommend the following hardware for the Wazuh Manager:
+- **Raspberry Pi 4 (8GB RAM)** or **Raspberry Pi 5**.
+- High-endurance microSD card or USB 3.0 SSD (preferred).
+
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
 #### Linux
+- **OS:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
 
 #### Windows
-- **Operating System:** Windows 10/11 or Windows Server 2016+.
+- **OS:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
@@ -94,6 +100,46 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Monitoring
+
+The honeypot targets common wallet extensions by placing decoys in their local storage directories.
+
+### Supported Extensions
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+
+### Default Path Mappings
+- **Linux:** `~/.config/google-chrome/Default/Local Extension Settings/<ID>/`
+- **Windows:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\<ID>\`
+- **Brave/Edge:** Similar paths under `BraveSoftware` or `Microsoft\Edge` directories.
+
+---
+
+## Docker Deployment
+
+If running the Wazuh Agent within a container, use the following configuration to ensure FIM and audit features work correctly.
+
+### Docker Run Configuration
+```bash
+docker run -d \
+  --name wazuh-agent \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e NODE_NAME='Honeypot-Node-01' \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/ossec/data:/var/ossec/data \
+  wazuh/wazuh-agent:latest
+```
+
+**Key Parameters:**
+- `--cap-add=AUDIT_CONTROL`: Allows the agent to interface with the host's audit system.
+- `--pid=host`: Required for user attribution in `whodata` mode.
+- `NODE_NAME`: Helps identify the specific honeypot instance in the Wazuh dashboard.
 
 ---
 
