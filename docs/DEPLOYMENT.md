@@ -19,6 +19,17 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
+#### Hardware Recommendations (Manager)
+For SMB environments, the Wazuh Manager can be deployed on a Raspberry Pi:
+- **Model:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card (Class 10/UHS-I) or, ideally, a USB 3.0 SSD for better performance and reliability.
+- **OS:** 64-bit Ubuntu Server or Raspberry Pi OS (64-bit).
+
+#### Network Requirements
+Ensure the following ports are open on the Wazuh Manager:
+- **1514 (TCP/UDP):** Agent event communication.
+- **1515 (TCP):** Agent enrollment.
+
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
@@ -95,6 +106,24 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Containerized Deployment (Docker)
+
+To run the Wazuh Agent in a container while maintaining high-fidelity monitoring:
+
+1. **Capabilities:** The container must have audit control capabilities to interact with the host's audit system.
+   ```bash
+   docker run -d \
+     --name wazuh-agent \
+     --cap-add=AUDIT_CONTROL \
+     --pid=host \
+     -e WAZUH_MANAGER="192.168.1.100" \
+     -e NODE_NAME="honeypot-container-01" \
+     -v /var/run/docker.sock:/var/run/docker.sock \
+     -v /var/ossec/etc:/var/ossec/etc \
+     wazuh/wazuh-agent:4.x
+   ```
+2. **Persistence:** Ensure that the honeypot artifacts are either generated inside the container or mounted via a persistent volume.
+
 ---
 
 ## Honeypot Artifact Generation
@@ -131,6 +160,59 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+### Standard Wallet Path Mappings
+
+In addition to browser extensions, the system monitors standard desktop wallet locations:
+
+#### Linux
+| Wallet | Path |
+|--------|------|
+| **Bitcoin** | `~/.bitcoin/wallet.dat` |
+| **Ethereum** | `~/.ethereum/keystore/` |
+| **Solana** | `~/.config/solana/id.json` |
+| **Electrum** | `~/.electrum/wallets/default_wallet` |
+| **Exodus** | `~/.config/Exodus/exodus.wallet/seed.secur` |
+
+#### Windows
+| Wallet | Path |
+|--------|------|
+| **Bitcoin** | `%APPDATA%\Bitcoin\wallet.dat` |
+| **Ethereum** | `%APPDATA%\Ethereum\keystore` |
+| **Electrum** | `%APPDATA%\Electrum\wallets\default_wallet` |
+| **Exodus** | `%APPDATA%\Exodus\exodus.wallet` |
+
+### Monitored Browser Extensions
+
+The system specifically targets the most common cryptocurrency wallet extensions:
+
+| Extension | ID |
+|-----------|----|
+| **MetaMask** | `nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| **Phantom** | `bfnaelmomeimhlpmgjnjophhpkkoljpa` |
+| **TronLink** | `ibnejdfjmmkpcnlpebklmnkoeoihofec` |
+| **Coinbase Wallet** | `hnfanknocfeofbddgcijnmhnfnkdnaad` |
+| **Binance Wallet** | `cadiboklkpojfamcoggejbbdjcoiljjk` |
+
+### Browser Extension Path Mappings
+
+The `honeypot-deployer` places decoys in realistic locations. Below are the common paths monitored for various browsers:
+
+#### Linux
+| Browser | Path |
+|---------|------|
+| **Chrome** | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Edge** | `~/.config/microsoft-edge/Default/Local Extension Settings/` |
+| **Brave** | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Firefox** | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+#### Windows
+| Browser | Path |
+|---------|------|
+| **Chrome** | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
 
 ---
 
