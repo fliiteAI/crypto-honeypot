@@ -8,8 +8,10 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
+    - [Docker / Containerized Setup](#docker--containerized-setup)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Browser Extension Path Reference](#browser-extension-path-reference)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,11 +20,20 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Network Connectivity:**
+    - Port **1514 (TCP/UDP)**: Agent event communication.
+    - Port **1515 (TCP)**: Agent enrollment.
+
+### Recommended Hardware (SMB / Home Lab)
+For small to medium deployments, a Raspberry Pi is an excellent choice for the Wazuh Manager:
+- **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**.
+- **Storage:** High-endurance microSD card or, ideally, a USB 3.0 SSD for better performance.
 
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
+- **Distributions:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
 
 #### Windows
@@ -40,27 +51,27 @@ Before deploying agents, the Wazuh Manager must be configured to recognize honey
 ### 1. Install Decoders
 Copy the custom decoders to your Wazuh Manager:
 ```bash
-cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
+sudo cp wazuh/decoders/honeypot_decoder.xml /var/ossec/etc/decoders/
 ```
 
 ### 2. Install Rules
 Copy the custom rules to your Wazuh Manager:
 ```bash
-cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
+sudo cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
 ```
 
 ### 3. (Optional) Active Response
 To automatically capture forensic data when a honeypot is accessed:
 ```bash
-cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
-chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
-chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
+sudo cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
+sudo chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
+sudo chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
 ```
 Configure the active response in your `ossec.conf` on the manager.
 
 ### 4. Restart Wazuh Manager
 ```bash
-systemctl restart wazuh-manager
+sudo systemctl restart wazuh-manager
 ```
 
 ---
@@ -76,14 +87,20 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+You can use the automated CLI tool or manual templates.
+
+**Automated Method:**
 ```bash
-honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
+honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux --output ./wazuh-config
+# Append the generated snippet to /var/ossec/etc/ossec.conf inside <syscheck>
 ```
+
+**Manual Method:**
+Copy the contents of `wazuh/agent-config/ossec-honeypot-fim.conf` into your agent's `/var/ossec/etc/ossec.conf` within the `<syscheck>` block.
 
 #### 3. Install Audit Rules
 ```bash
-cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
+sudo cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
 ```
 
@@ -94,6 +111,21 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Docker / Containerized Setup
+To run a Wazuh agent inside a container with full honeypot detection capabilities:
+
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e WAZUH_AGENT_NAME='my-container' \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /path/to/artifacts:/mnt/honeypot \
+  wazuh/wazuh-agent:latest
+```
+**Crucial Note:** `--cap-add=AUDIT_CONTROL` and `--pid=host` are required for `auditd` (whodata) to function correctly inside the container.
 
 ---
 
@@ -131,6 +163,26 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Browser Extension Path Reference
+
+The following table lists the standard paths monitored for browser extension decoys.
+
+| Browser | OS | Path |
+|---------|----|------|
+| **Chrome / Brave / Edge** | Linux | `~/.config/[browser]/Default/Local Extension Settings/[Extension ID]` |
+| **Chrome / Brave / Edge** | Windows | `%LOCALAPPDATA%\[browser]\User Data\Default\Local Extension Settings\[Extension ID]` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++[Extension ID]` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++[Extension ID]` |
+
+### Monitored Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
