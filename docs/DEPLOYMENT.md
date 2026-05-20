@@ -4,12 +4,16 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Connectivity Requirements](#connectivity-requirements)
+4. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+5. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment](#containerized-deployment)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+8. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -19,17 +23,31 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
-### Endpoint Requirements
-#### Linux
-- **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
-- **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
-- **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
+### Supported Operating Systems
+- **Linux:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
+- **Windows:** Windows 10/11 or Windows Server 2016+.
 
-#### Windows
-- **Operating System:** Windows 10/11 or Windows Server 2016+.
-- **PowerShell:** 5.1 or higher.
-- **Sysmon:** Recommended for enhanced process-level visibility.
-- **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+---
+
+## Hardware Recommendations
+
+For SMB environments, the Wazuh Manager can be deployed on a Raspberry Pi for cost-effectiveness and low power consumption.
+
+- **Recommended:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card or, preferably, a **USB 3.0 SSD** for improved I/O performance and reliability.
+- **OS:** 64-bit OS is required.
+
+---
+
+## Connectivity Requirements
+
+The following ports must be open on the Wazuh Manager for agents to communicate and enroll:
+
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| 1514 | TCP/UDP  | Agent event communication |
+| 1515 | TCP      | Agent enrollment |
+| 55000| TCP      | Wazuh API (optional, for management) |
 
 ---
 
@@ -95,6 +113,23 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Containerized Deployment
+
+When running the Wazuh agent inside a Docker container, additional privileges are required for `auditd` support and `whodata` monitoring.
+
+**Docker Run Configuration:**
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER="MANAGER_IP" \
+  -e NODE_NAME="AGENT_NAME" \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/ossec/etc:/var/ossec/etc \
+  wazuh/wazuh-agent:latest
+```
+Note: `--cap-add=AUDIT_CONTROL` and `--pid=host` are essential for the agent to monitor host-level file access via `auditd`.
+
 ---
 
 ## Honeypot Artifact Generation
@@ -131,6 +166,28 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Browser Extension Path Mappings
+
+Honeypot browser extension decoys should be placed in the following directories to be detected by infostealers.
+
+### Linux
+| Browser | Extension Path |
+|---------|----------------|
+| **Chrome** | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Edge** | `~/.config/microsoft-edge/Default/Local Extension Settings/` |
+| **Brave** | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Firefox** | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+### Windows
+| Browser | Extension Path |
+|---------|----------------|
+| **Chrome** | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
 
 ---
 
