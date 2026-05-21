@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Network Requirements](#network-requirements)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Browser Extension Paths](#browser-extension-paths)
+5. [Containerized Deployment (Docker)](#containerized-deployment-docker)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +21,11 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Recommended Hardware (Manager)
+For SMB environments, we recommend running the Wazuh Manager on:
+- **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**.
+- **Storage:** High-endurance microSD card (minimum 64GB) or, preferably, a USB 3.0 SSD.
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +38,18 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Network Requirements
+
+The following ports must be open between the Wazuh Agents and the Wazuh Manager:
+
+| Port | Protocol | Description |
+|------|----------|-------------|
+| **1514** | TCP/UDP | Agent event communication (Required) |
+| **1515** | TCP | Agent enrollment (Optional, but recommended) |
+| **55000** | TCP | Wazuh API (For manager management) |
 
 ---
 
@@ -97,6 +117,48 @@ Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot direct
 
 ---
 
+## Browser Extension Paths
+
+The `honeypot-deployer` generates decoys for popular extensions. Ensure your Wazuh FIM configuration covers these platform-specific paths:
+
+| Browser | OS | Path Template |
+|---------|----|---------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default-release/storage/default/` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default-release\storage\default\` |
+
+*Note: The actual extension IDs (e.g., `nkbihfbeogaeaoehlefnkodbefgpgknn` for MetaMask) are created as subdirectories within these paths.*
+
+---
+
+## Containerized Deployment (Docker)
+
+If you are running the Wazuh Agent in a Docker container, ensure the following:
+
+1. **Volume Mounts:** Mount the host directories you wish to monitor into the container.
+2. **Privileged Mode:** For `auditd` support inside a container, you may need to run it with `--cap-add=AUDIT_CONTROL` and `--pid=host`.
+3. **Environment Variables:** Set `JOIN_MANAGER_MASTER` to your Wazuh Manager's IP.
+
+Example `docker-compose.yml` snippet:
+```yaml
+services:
+  wazuh-agent:
+    image: wazuh/wazuh-agent:latest
+    privileged: true
+    pid: host
+    volumes:
+      - /home/user/.bitcoin:/home/user/.bitcoin:ro
+      - /var/ossec/etc:/var/ossec/etc
+    environment:
+      - WAZUH_MANAGER=192.168.1.100
+```
+
+---
+
 ## Honeypot Artifact Generation
 
 There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
@@ -128,9 +190,6 @@ chmod +x deploy.sh
 ```powershell
 .\deploy.ps1
 ```
-
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
 
 ---
 
