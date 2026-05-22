@@ -15,12 +15,21 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## System Requirements
 
+### Hardware Recommendations (Wazuh Manager)
+For SMB environments, the Wazuh Manager can be deployed on a Raspberry Pi.
+- **Hardware:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card or (preferred) a USB 3.0 SSD for improved I/O performance and reliability.
+
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
-- **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Wazuh Manager:** Version 4.x or higher.
+- **Wazuh Agent:** Version 4.x or higher.
+- **Network Requirements:**
+    - **Port 1514 (TCP/UDP):** For agent event communication.
+    - **Port 1515 (TCP):** For agent enrollment and registration.
 
 ### Endpoint Requirements
 #### Linux
+- **Supported Distributions:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
@@ -30,6 +39,25 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Docker Deployment
+
+When deploying the Wazuh agent in a containerized environment, additional privileges are required to support high-fidelity `whodata` monitoring via `auditd`.
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="YOUR_MANAGER_IP" \
+  -e NODE_NAME="Honeypot-Node" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  wazuh/wazuh-agent:4.x
+```
+
+*Note: `--cap-add=AUDIT_CONTROL` and `--pid=host` allow the containerized agent to interact with the host's audit subsystem.*
 
 ---
 
@@ -94,6 +122,31 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Path Reference
+
+The following paths are commonly used by cryptocurrency extensions. The honeypot deployer places decoys in these locations.
+
+### Linux
+- **Chrome:** `~/.config/google-chrome/Default/Local Extension Settings/`
+- **Brave:** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/`
+- **Edge:** `~/.config/microsoft-edge/Default/Local Extension Settings/`
+- **Firefox:** `~/.mozilla/firefox/*.default*/storage/default/` (uses `moz-extension+++` naming convention)
+
+### Windows
+- **Chrome:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\`
+- **Brave:** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\`
+- **Edge:** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\`
+- **Firefox:** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\`
+
+**Extension IDs monitored by default:**
+- MetaMask: `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- Phantom: `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- TronLink: `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- Coinbase Wallet: `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- Binance Wallet: `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
