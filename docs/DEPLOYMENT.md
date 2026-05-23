@@ -4,16 +4,24 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Network Requirements](#network-requirements)
+4. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+5. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+6. [Docker Deployment](#docker-deployment)
+7. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+8. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+9. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
+
+### Supported Operating Systems
+- **Linux:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+
+- **Windows:** Windows 10/11, Windows Server 2016+
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
@@ -30,6 +38,23 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, the Wazuh Manager can be deployed on cost-effective hardware:
+- **Recommended:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** A high-endurance microSD card is minimum, but a **USB 3.0 SSD** is strongly preferred for performance and reliability.
+- **Endpoints:** The honeypot artifacts themselves have negligible overhead on the monitored endpoints.
+
+---
+
+## Network Requirements
+
+Ensure the following ports are open on the Wazuh Manager for agent communication:
+- **Port 1514 (TCP/UDP):** Agent event communication.
+- **Port 1515 (TCP):** Agent enrollment.
 
 ---
 
@@ -94,6 +119,46 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Docker Deployment
+
+To run a Wazuh agent with high-fidelity honeypot monitoring inside a container:
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e WAZUH_AGENT_NAME='honeypot-container' \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
+  wazuh/wazuh-agent:latest
+```
+
+**Note:** `--cap-add=AUDIT_CONTROL` and `--pid=host` are required for `whodata` (Auditd) integration to work correctly within the container.
+
+---
+
+## Browser Extension Path Mappings
+
+The honeypot deployer generates decoys for several popular browser extensions. These should be placed in the following directories (relative to the user home):
+
+### Linux
+| Browser | Path |
+|---------|------|
+| **Chrome** | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Brave** | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| **Firefox** | `~/.mozilla/firefox/*.default*/storage/default/` |
+
+### Windows
+| Browser | Path |
+|---------|------|
+| **Chrome** | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Edge** | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
 
 ---
 
