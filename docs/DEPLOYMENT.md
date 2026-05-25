@@ -4,12 +4,16 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Network Requirements](#network-requirements)
+4. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+5. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment (Docker)](#containerized-deployment-docker)
+6. [Browser Extension Monitoring](#browser-extension-monitoring)
+7. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+8. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -19,6 +23,10 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
+### OS Support
+- **Linux:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
+- **Windows:** Windows 10/11, Windows Server 2016+.
+
 ### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
@@ -26,10 +34,31 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
 
 #### Windows
-- **Operating System:** Windows 10/11 or Windows Server 2016+.
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, the Wazuh Manager can be deployed on cost-effective hardware:
+
+- **Recommended:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card or USB 3.0 SSD (preferred for better I/O performance).
+- **Power:** Official Raspberry Pi power supply to ensure stability.
+
+---
+
+## Network Requirements
+
+Ensure the following ports are open on the Wazuh Manager for agent communication:
+
+| Port | Protocol | Description |
+|------|----------|-------------|
+| 1514 | TCP/UDP | Agent event communication |
+| 1515 | TCP | Agent enrollment and keep-alive |
+| 55000 | TCP | Wazuh API (optional, for management) |
 
 ---
 
@@ -94,6 +123,63 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment (Docker)
+
+To run the Wazuh agent in a container while maintaining honeypot monitoring capabilities:
+
+1. **Host Prerequisites:** `auditd` must be installed on the host OS.
+2. **Docker Run Command:**
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER='WAZUH_MANAGER_IP' \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/ossec/etc:/var/ossec/etc \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  wazuh/wazuh-agent:latest
+```
+*Note: `--cap-add=AUDIT_CONTROL` and `--pid=host` are required for the agent to interact with the host's auditd system for `whodata` monitoring.*
+
+---
+
+## Browser Extension Monitoring
+
+The system monitors specific browser extension data directories for common crypto wallets.
+
+### Monitored Extension IDs
+
+| Extension | ID |
+|-----------|----|
+| MetaMask | `nkbihfbeogaeaoehlefnkodbefgpgknn` |
+| Phantom | `bfnaelmomeimhlpmgjnjophhpkkoljpa` |
+| TronLink | `ibnejdfjmmkpcnlpebklmnkoeoihofec` |
+| Coinbase Wallet | `hnfanknocfeofbddgcijnmhnfnkdnaad` |
+| Binance Wallet | `cadiboklkpojfamcoggejbbdjcoiljjk` |
+
+### Path Mappings
+
+#### Browser Extensions
+- **Linux (Chrome/Brave):** `~/.config/[browser]/Default/Local Extension Settings/[extension_id]`
+- **Windows (Chrome/Edge/Brave):** `%LOCALAPPDATA%\[browser]\User Data\Default\Local Extension Settings\[extension_id]`
+- **Linux (Firefox):** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++[UUID]`
+- **Windows (Firefox):** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++[UUID]`
+
+#### Desktop Wallets
+- **Bitcoin:**
+  - Linux: `~/.bitcoin/wallet.dat`
+  - Windows: `%APPDATA%\Bitcoin\wallet.dat`
+- **Ethereum:**
+  - Linux: `~/.ethereum/keystore/`
+  - Windows: `%APPDATA%\Ethereum\keystore\`
+- **Solana:**
+  - Linux: `~/.config/solana/id.json`
+- **Electrum:**
+  - Linux: `~/.electrum/wallets/`
+  - Windows: `%APPDATA%\Electrum\wallets\`
+- **Exodus:**
+  - Linux: `~/.config/Exodus/exodus.wallet/`
+  - Windows: `%APPDATA%\Exodus\exodus.wallet\`
 
 ---
 
