@@ -17,10 +17,13 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+  - **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5 with high-endurance microSD or USB 3.0 SSD.
+  - **Connectivity:** Port 1514 (TCP/UDP) for agent events and 1515 (TCP) for enrollment must be open.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
 #### Linux
+- **Supported Distributions:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
@@ -81,7 +84,18 @@ Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<sy
 honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
 ```
 
-#### 3. Install Audit Rules
+#### 3. Containerized Deployment (Optional)
+If running the Wazuh agent inside a Docker container, it must be started with elevated host privileges to allow `auditd` to function:
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="MANAGER_IP" \
+  -e NODE_NAME="AGENT_NAME" \
+  wazuh/wazuh-agent:4.x
+```
+
+#### 4. Install Audit Rules
 ```bash
 cp wazuh/agent-config/honeypot-audit.rules /etc/audit/rules.d/honeypot.rules
 sudo auditctl -R /etc/audit/rules.d/honeypot.rules
