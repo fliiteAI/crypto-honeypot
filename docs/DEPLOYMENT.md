@@ -9,18 +9,28 @@ This document provides detailed requirements and step-by-step instructions for d
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+5. [Docker Deployment](#docker-deployment)
+6. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
 
+### Hardware Recommendations (Wazuh Manager)
+For SMB environments, we recommend running the Wazuh Manager on:
+- **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**.
+- **Storage:** High-endurance microSD card or USB 3.0 SSD (preferred).
+
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Connectivity:**
+    - Port `1514` (TCP/UDP): Agent event communication.
+    - Port `1515` (TCP): Agent enrollment.
 
 ### Endpoint Requirements
 #### Linux
+- **Supported Distributions:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
@@ -30,6 +40,18 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Browser Extension Paths
+The honeypot targets common paths used by info-stealer malware to find browser extension data.
+
+| Browser | OS | Path Mapping |
+|---------|----|--------------|
+| **Chrome** | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| **Edge** | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Brave** | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default-release\storage\default\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default-release/storage/default/` |
 
 ---
 
@@ -131,6 +153,30 @@ chmod +x deploy.sh
 
 ### Manifest Security
 The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+
+---
+
+## Docker Deployment
+
+To run the Wazuh agent in a containerized environment while maintaining honeypot monitoring:
+
+### 1. Run Configuration
+Ensure the container has access to the host's audit logs if using `whodata` on Linux.
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -e NODE_NAME="docker-node" \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /honeypot-artifacts:/etc/honeypot \
+  wazuh/wazuh-agent:latest
+```
+
+### 2. Volume Mapping
+Mount the generated honeypot artifacts into the container so the FIM process can monitor them.
 
 ---
 
