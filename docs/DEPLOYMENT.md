@@ -15,11 +15,17 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## System Requirements
 
-### Wazuh Infrastructure
+### Wazuh Infrastructure (Manager)
 - **Wazuh Manager:** version 4.x or higher.
+- **Hardware (SMB Recommended):** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card or USB 3.0 SSD (preferred).
+- **Network Ports:**
+    - `1514 (TCP/UDP)`: Agent event communication.
+    - `1515 (TCP)`: Agent enrollment.
+
+### Endpoint Requirements (Agents)
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
-### Endpoint Requirements
 #### Linux
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
@@ -30,6 +36,18 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Containerized Deployment (Docker)
+To run a Wazuh agent in a container with high-fidelity `whodata` monitoring (via `auditd`), the container must be started with elevated host privileges:
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="192.168.1.100" \
+  -e NODE_NAME="crypto-node-01" \
+  wazuh/wazuh-agent:latest
+```
 
 ---
 
@@ -94,6 +112,24 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Path Mappings
+
+When deploying browser extension decoys, use the following standard paths for monitoring:
+
+### Linux
+- **Chrome:** `~/.config/google-chrome/Default/Local Extension Settings/`
+- **Edge:** `~/.config/microsoft-edge/Default/Local Extension Settings/`
+- **Brave:** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/`
+- **Firefox:** `~/.mozilla/firefox/*.default*/storage/default/` (Uses `moz-extension+++` naming)
+
+### Windows
+- **Chrome:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\`
+- **Edge:** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\`
+- **Brave:** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\`
+- **Firefox:** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\`
 
 ---
 
