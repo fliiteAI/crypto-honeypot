@@ -179,10 +179,6 @@ crypto-wallet-honeypot/
 - Private keys exist only in the manifest and the deployed artifacts -- they are never transmitted.
 - All detection relies on the principle that **legitimate users never access honeypot files**.
 
-## Documentation
-
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
-
 ## Requirements
 
 - **Python:** 3.10+
@@ -190,6 +186,12 @@ For detailed installation and setup instructions, including OS-specific requirem
 - **Linux:** `auditd` (required for high-fidelity `whodata` FIM)
 - **Windows:** Sysmon (recommended for process-level visibility)
 - **Hardware:** Raspberry Pi 4/5 (recommended for Wazuh Manager in SMB environments)
+
+## Documentation
+
+- [Architecture Overview](docs/ARCHITECTURE.md) - 4-layer detection strategy and MITRE mapping.
+- [Deployment Guide](docs/DEPLOYMENT.md) - Detailed installation and OS-specific requirements.
+- [On-Chain Monitoring](docs/ON_CHAIN_MONITORING.md) - Setting up watchlists for honeypot addresses.
 
 ## License
 
