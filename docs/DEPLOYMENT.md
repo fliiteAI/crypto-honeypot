@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Network Requirements](#network-requirements)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment (Docker)](#containerized-deployment-docker)
+5. [Browser Extension Path Reference](#browser-extension-path-reference)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -19,17 +22,38 @@ This document provides detailed requirements and step-by-step instructions for d
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
-### Endpoint Requirements
+### Hardware Recommendations (SMB/Home Lab)
+For the Wazuh Manager in a small to medium business environment:
+- **Primary:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card or USB 3.0 SSD (preferred).
+
+### Supported Operating Systems
 #### Linux
+- Ubuntu 20.04, 22.04, 24.04
+- Debian 11, 12
+- RHEL / AlmaLinux / Rocky Linux 8, 9
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
 
 #### Windows
-- **Operating System:** Windows 10/11 or Windows Server 2016+.
+- Windows 10, 11 (Pro/Enterprise recommended for Audit Policy features)
+- Windows Server 2016, 2019, 2022
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Network Requirements
+
+The following ports must be open between the monitored agents and the Wazuh Manager:
+
+| Port | Protocol | Description |
+|------|----------|-------------|
+| 1514 | TCP/UDP | Agent event communication |
+| 1515 | TCP | Agent enrollment and registration |
+| 55000| TCP | Wazuh API (optional, for management) |
 
 ---
 
@@ -76,9 +100,9 @@ sudo apt update && sudo apt install auditd -y
 ```
 
 #### 2. Configure FIM
-Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. You can use the template at `wazuh/agent-config/ossec-honeypot-fim.conf` or generate a custom one:
+Add the honeypot monitoring paths to `/var/ossec/etc/ossec.conf` inside the `<syscheck>` block. Use the `honeypot-deployer` CLI to generate a customized config based on your actual deployment:
 ```bash
-honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux
+honeypot-deployer wazuh-config --manifest ./path/to/manifest.json --os linux --output ./wazuh-config
 ```
 
 #### 3. Install Audit Rules
@@ -94,6 +118,44 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment (Docker)
+
+To run a Wazuh agent inside a container with high-fidelity `whodata` monitoring (via `auditd`), the container requires elevated privileges to interface with the host's kernel audit system.
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e NODE_NAME='crypto-honeypot-node' \
+  -v /path/to/honeypots:/monitored/path \
+  wazuh/wazuh-agent:latest
+```
+
+---
+
+## Browser Extension Path Reference
+
+The honeypot targets these common extension storage locations.
+
+### Linux (Chrome-based)
+- **Chrome:** `~/.config/google-chrome/Default/Local Extension Settings/`
+- **Brave:** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/`
+- **Edge:** `~/.config/microsoft-edge/Default/Local Extension Settings/`
+
+### Windows (Chrome-based)
+- **Chrome:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\`
+- **Brave:** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\`
+- **Edge:** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\`
+
+### Extension IDs Monitored
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+- **TronLink:** `ibnejdfjmmkpcnlpebklmnkoeoihofec`
+- **Binance Wallet:** `cadiboklkpojfamcoggejbbdjcoiljjk`
 
 ---
 
