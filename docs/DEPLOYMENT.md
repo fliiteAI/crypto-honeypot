@@ -4,12 +4,16 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Network Requirements](#network-requirements)
+4. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+5. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment (Docker)](#containerized-deployment-docker)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+8. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -18,6 +22,10 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+
+### Supported Operating Systems
+- **Linux:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
+- **Windows:** Windows 10/11 or Windows Server 2016+.
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +38,27 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, we recommend running the Wazuh Manager on dedicated hardware to ensure performance and reliability.
+
+- **Recommended Device:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card or, preferably, a USB 3.0 SSD for better I/O performance.
+- **Power:** Official Raspberry Pi power supply to prevent throttling.
+
+---
+
+## Network Requirements
+
+Ensure the following ports are open on the Wazuh Manager to allow agent communication:
+
+| Port | Protocol | Description |
+|------|----------|-------------|
+| 1514 | TCP/UDP  | Agent event communication (FIM, logs, etc.) |
+| 1515 | TCP      | Agent enrollment and registration |
 
 ---
 
@@ -50,13 +79,13 @@ cp wazuh/rules/honeypot_rules.xml /var/ossec/etc/rules/
 ```
 
 ### 3. (Optional) Active Response
-To automatically capture forensic data when a honeypot is accessed:
+To automatically capture forensic data or lockout accounts when a honeypot is accessed:
 ```bash
 cp wazuh/active-response/honeypot-forensic-snapshot.sh /var/ossec/active-response/bin/
 chmod 750 /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
 chown root:wazuh /var/ossec/active-response/bin/honeypot-forensic-snapshot.sh
 ```
-Configure the active response in your `ossec.conf` on the manager.
+The system is also configured to support account lockout via `disable-account` for high-severity alerts.
 
 ### 4. Restart Wazuh Manager
 ```bash
@@ -95,42 +124,49 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Containerized Deployment (Docker)
+
+To run a Wazuh agent within a Docker container while maintaining high-fidelity monitoring:
+
+1. **Run with elevated privileges:**
+   ```bash
+   docker run -d --name wazuh-agent \
+     --cap-add=AUDIT_CONTROL \
+     --pid=host \
+     -e WAZUH_MANAGER="MANAGER_IP" \
+     -e NODE_NAME="CONTAINER_NAME" \
+     -v /path/to/artifacts:/mnt/honeypot:ro \
+     wazuh/wazuh-agent:latest
+   ```
+2. **Persistence:** Ensure honeypot artifacts are mounted from the host or a persistent volume.
+
 ---
 
 ## Honeypot Artifact Generation
 
-There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
-
-### Option A: Using the CLI (Recommended)
-The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest for high-fidelity monitoring and on-chain correlation.
+Use the `honeypot-deployer` CLI to generate unique, randomized artifacts.
 
 ```bash
-# 1. Install the tool
-pip install .
-
-# 2. Generate artifacts
+# Generate artifacts
 honeypot-deployer generate --output ./my-artifacts
 
-# 3. View the generated manifest
-honeypot-deployer show --manifest ./my-artifacts/manifest.json
+# Health check
+honeypot-deployer health-check --manifest ./my-artifacts/manifest.json
 ```
 
-### Option B: Standalone Scripts
-For quick deployments without installing the Python package, you can use the provided shell and PowerShell scripts. These create a standard set of honeyfiles.
+---
 
-**Linux:**
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
+## Browser Extension Path Mappings
 
-**Windows:**
-```powershell
-.\deploy.ps1
-```
+The honeypot targets common paths used by info-stealer malware to find wallet data.
 
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+| Browser | Extension | Linux Path | Windows Path |
+|---------|-----------|------------|--------------|
+| Chrome | MetaMask | `~/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn\` |
+| Chrome | Phantom | `~/.config/google-chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\bfnaelmomeimhlpmgjnjophhpkkoljpa\` |
+| Firefox | Multiple | `~/.mozilla/firefox/*.default*/storage/default/` | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
+
+*Note: Firefox uses the `moz-extension+++` naming convention for decoy folders within the storage directory.*
 
 ---
 
