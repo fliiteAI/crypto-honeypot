@@ -17,10 +17,12 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+    - *Hardware Recommendation:* Raspberry Pi 4 (8GB) or Raspberry Pi 5 for SMB environments. Use a high-endurance microSD card or USB 3.0 SSD.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
 #### Linux
+- **Supported Distributions:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
@@ -96,6 +98,22 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
 ---
+
+## Honeypot Paths & Locations
+
+The following table lists the default paths monitored by the system. The `honeypot-deployer` CLI creates artifacts at these locations to mimic real cryptocurrency wallets.
+
+| Asset | Linux Path | Windows Path |
+|-------|------------|--------------|
+| **Bitcoin** | `~/.bitcoin/wallet.dat` | `%APPDATA%\Bitcoin\wallet.dat` |
+| **Ethereum** | `~/.ethereum/keystore/` | `%APPDATA%\Ethereum\keystore\` |
+| **Solana** | `~/.config/solana/id.json` | `%USERPROFILE%\.config\solana\id.json` |
+| **Electrum** | `~/.electrum/wallets/` | `%APPDATA%\Electrum\wallets\` |
+| **Exodus** | `~/.config/Exodus/` | `%APPDATA%\Exodus\` |
+| **MetaMask** | `~/.config/google-chrome/Default/Local Extension Settings/nkbihfbeogaeaoehlefnkodbefgpgknn/` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\nkbihfbeogaeaoehlefnkodbefgpgknn\` |
+| **Phantom** | `~/.config/google-chrome/Default/Local Extension Settings/bfnaelmomeimhlpmgjnjophhpkkoljpa/` | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\bfnaelmomeimhlpmgjnjophhpkkoljpa\` |
+
+*Note: For browser extensions, paths may vary depending on the browser (Chrome, Edge, Brave) and profile name.*
 
 ## Honeypot Artifact Generation
 
