@@ -266,6 +266,7 @@ def get_default_paths() -> dict[str, dict[str, str]]:
     """Return default browser extension decoy placement paths."""
     mm_id = EXTENSION_IDS["metamask_chrome"]
     ph_id = EXTENSION_IDS["phantom_chrome"]
+    cb_id = EXTENSION_IDS["coinbase_chrome"]
 
     chrome_ext_linux = "~/.config/google-chrome/Default/Local Extension Settings"
     chrome_ext_win = (
@@ -277,16 +278,37 @@ def get_default_paths() -> dict[str, dict[str, str]]:
         "/Default/Local Extension Settings"
     )
 
+    # Brave paths
+    brave_ext_linux = "~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings"
+    brave_ext_win = (
+        "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data"
+        "\\Default\\Local Extension Settings"
+    )
+
+    # Edge paths
+    edge_ext_win = (
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data"
+        "\\Default\\Local Extension Settings"
+    )
+
     return {
         "linux": {
             "metamask_chrome": f"{chrome_ext_linux}/{mm_id}/",
             "phantom_chrome": f"{chrome_ext_linux}/{ph_id}/",
+            "coinbase_chrome": f"{chrome_ext_linux}/{cb_id}/",
+            "metamask_brave": f"{brave_ext_linux}/{mm_id}/",
+            "phantom_brave": f"{brave_ext_linux}/{ph_id}/",
             "exodus": "~/.config/Exodus/exodus.wallet/",
             "electrum": "~/.electrum/wallets/",
         },
         "windows": {
             "metamask_chrome": f"{chrome_ext_win}\\{mm_id}\\",
             "phantom_chrome": f"{chrome_ext_win}\\{ph_id}\\",
+            "coinbase_chrome": f"{chrome_ext_win}\\{cb_id}\\",
+            "metamask_brave": f"{brave_ext_win}\\{mm_id}\\",
+            "phantom_brave": f"{brave_ext_win}\\{ph_id}\\",
+            "metamask_edge": f"{edge_ext_win}\\{mm_id}\\",
+            "phantom_edge": f"{edge_ext_win}\\{ph_id}\\",
             "exodus": "%APPDATA%\\Exodus\\exodus.wallet\\",
             "electrum": "%APPDATA%\\Electrum\\wallets\\",
         },
