@@ -36,7 +36,13 @@ def create_keystore_artifact(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Use standard eth-account keystore encryption
-    keystore = Account.encrypt(keypair.private_key_hex, password)
+    private_key = keypair.private_key_hex
+    if isinstance(private_key, str) and private_key.startswith("0x"):
+        private_key_bytes = bytes.fromhex(private_key[2:])
+    else:
+        private_key_bytes = bytes.fromhex(str(private_key))
+
+    keystore = Account.encrypt(private_key_bytes, password)
 
     # Generate realistic filename matching geth convention
     timestamp = time.strftime("%Y-%m-%dT%H-%M-%S", time.gmtime())
