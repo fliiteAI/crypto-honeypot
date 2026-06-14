@@ -181,7 +181,11 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+For detailed information on the project, please refer to the following guides:
+
+- **[Architecture Overview](docs/ARCHITECTURE.md)** - Details on the 4-layer detection strategy and MITRE ATT&CK mapping.
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Step-by-step instructions for installing and configuring the honeypot and Wazuh.
+- **[On-Chain Monitoring](docs/ON_CHAIN_MONITORING.md)** - Guide for tracking bait addresses on various blockchains.
 
 ## Requirements
 
