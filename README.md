@@ -181,7 +181,11 @@ crypto-wallet-honeypot/
 
 ## Documentation
 
-For detailed installation and setup instructions, including OS-specific requirements, please refer to the [Deployment Guide](DEPLOYMENT.md).
+Detailed documentation is available in the `docs/` directory:
+
+- [Architecture Overview](docs/ARCHITECTURE.md) - Learn about the 4-layer detection strategy and MITRE mapping.
+- [Deployment Guide](docs/DEPLOYMENT.md) - Step-by-step instructions for Wazuh Manager and Agent setup.
+- [On-Chain Monitoring](docs/ON_CHAIN_MONITORING.md) - Guide for setting up Layer 4 tracking on block explorers.
 
 ## Requirements
 

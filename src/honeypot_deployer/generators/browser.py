@@ -24,9 +24,11 @@ class BrowserDecoyConfig:
 
 # Known wallet extension IDs
 EXTENSION_IDS = {
-    "metamask_chrome": "nkbihfbeogaeaoehlefnkodbefgpgknn",
-    "phantom_chrome": "bfnaelmomeimhlpmgjnjophhpkkoljpa",
-    "coinbase_chrome": "hnfanknocfeofbddgcijnmhnfnkdnaad",
+    "metamask": "nkbihfbeogaeaoehlefnkodbefgpgknn",
+    "phantom": "bfnaelmomeimhlpmgjnjophhpkkoljpa",
+    "tronlink": "ibnejdfjmmkpcnlpebklmnkoeoihofec",
+    "coinbase": "hnfanknocfeofbddgcijnmhnfnkdnaad",
+    "binance": "cadiboklkpojfamcoggejbbdjcoiljjk",
 }
 
 
@@ -150,7 +152,7 @@ def create_metamask_decoy(
     eth_address: str, output_path: Path
 ) -> Path:
     """Create a fake MetaMask Chrome extension local storage directory."""
-    ext_id = EXTENSION_IDS["metamask_chrome"]
+    ext_id = EXTENSION_IDS["metamask"]
     ext_dir = output_path / "metamask" / ext_id
 
     ext_dir.mkdir(parents=True, exist_ok=True)
@@ -184,7 +186,7 @@ def create_phantom_decoy(
     sol_address: str, output_path: Path
 ) -> Path:
     """Create a fake Phantom Chrome extension local storage directory."""
-    ext_id = EXTENSION_IDS["phantom_chrome"]
+    ext_id = EXTENSION_IDS["phantom"]
     ext_dir = output_path / "phantom" / ext_id
 
     ext_dir.mkdir(parents=True, exist_ok=True)
@@ -264,39 +266,76 @@ def create_electrum_decoy(
 
 def get_default_paths() -> dict[str, dict[str, str]]:
     """Return default browser extension decoy placement paths."""
-    mm_id = EXTENSION_IDS["metamask_chrome"]
-    ph_id = EXTENSION_IDS["phantom_chrome"]
+    mm_id = EXTENSION_IDS["metamask"]
+    ph_id = EXTENSION_IDS["phantom"]
+    tr_id = EXTENSION_IDS["tronlink"]
+    cb_id = EXTENSION_IDS["coinbase"]
+    bn_id = EXTENSION_IDS["binance"]
 
-    chrome_ext_linux = "~/.config/google-chrome/Default/Local Extension Settings"
-    chrome_ext_win = (
-        "%LOCALAPPDATA%\\Google\\Chrome\\User Data"
-        "\\Default\\Local Extension Settings"
+    # Chrome
+    chrome_linux = "~/.config/google-chrome/Default/Local Extension Settings"
+    chrome_win = "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Local Extension Settings"
+    chrome_mac = "~/Library/Application Support/Google/Chrome/Default/Local Extension Settings"
+
+    # Brave
+    brave_linux = "~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings"
+    brave_win = (
+        "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser"
+        "\\User Data\\Default\\Local Extension Settings"
     )
-    chrome_ext_mac = (
-        "~/Library/Application Support/Google/Chrome"
+    brave_mac = (
+        "~/Library/Application Support/BraveSoftware/Brave-Browser"
         "/Default/Local Extension Settings"
     )
 
-    return {
+    # Edge
+    edge_linux = "~/.config/microsoft-edge/Default/Local Extension Settings"
+    edge_win = (
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data"
+        "\\Default\\Local Extension Settings"
+    )
+    edge_mac = (
+        "~/Library/Application Support/Microsoft Edge"
+        "/Default/Local Extension Settings"
+    )
+
+    paths = {
         "linux": {
-            "metamask_chrome": f"{chrome_ext_linux}/{mm_id}/",
-            "phantom_chrome": f"{chrome_ext_linux}/{ph_id}/",
             "exodus": "~/.config/Exodus/exodus.wallet/",
             "electrum": "~/.electrum/wallets/",
         },
         "windows": {
-            "metamask_chrome": f"{chrome_ext_win}\\{mm_id}\\",
-            "phantom_chrome": f"{chrome_ext_win}\\{ph_id}\\",
             "exodus": "%APPDATA%\\Exodus\\exodus.wallet\\",
             "electrum": "%APPDATA%\\Electrum\\wallets\\",
         },
         "macos": {
-            "metamask_chrome": f"{chrome_ext_mac}/{mm_id}/",
-            "phantom_chrome": f"{chrome_ext_mac}/{ph_id}/",
             "exodus": "~/Library/Application Support/Exodus/exodus.wallet/",
             "electrum": "~/.electrum/wallets/",
         },
     }
+
+    # Add extension paths for each browser and OS
+    browsers = [
+        ("chrome", chrome_linux, chrome_win, chrome_mac),
+        ("brave", brave_linux, brave_win, brave_mac),
+        ("edge", edge_linux, edge_win, edge_mac),
+    ]
+
+    extensions = [
+        ("metamask", mm_id),
+        ("phantom", ph_id),
+        ("tronlink", tr_id),
+        ("coinbase", cb_id),
+        ("binance", bn_id),
+    ]
+
+    for b_name, l_path, w_path, m_path in browsers:
+        for e_name, e_id in extensions:
+            paths["linux"][f"{e_name}_{b_name}"] = f"{l_path}/{e_id}/"
+            paths["windows"][f"{e_name}_{b_name}"] = f"{w_path}\\{e_id}\\"
+            paths["macos"][f"{e_name}_{b_name}"] = f"{m_path}/{e_id}/"
+
+    return paths
 
 
 def generate_artifact_bundle(
