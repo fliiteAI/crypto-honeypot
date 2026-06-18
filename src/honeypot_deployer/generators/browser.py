@@ -24,9 +24,11 @@ class BrowserDecoyConfig:
 
 # Known wallet extension IDs
 EXTENSION_IDS = {
-    "metamask_chrome": "nkbihfbeogaeaoehlefnkodbefgpgknn",
-    "phantom_chrome": "bfnaelmomeimhlpmgjnjophhpkkoljpa",
-    "coinbase_chrome": "hnfanknocfeofbddgcijnmhnfnkdnaad",
+    "metamask": "nkbihfbeogaeaoehlefnkodbefgpgknn",
+    "phantom": "bfnaelmomeimhlpmgjnjophhpkkoljpa",
+    "tronlink": "ibnejdfjmmkpcnlpebklmnkoeoihofec",
+    "coinbase": "hnfanknocfeofbddgcijnmhnfnkdnaad",
+    "binance": "cadiboklkpojfamcoggejbbdjcoiljjk",
 }
 
 
@@ -150,7 +152,7 @@ def create_metamask_decoy(
     eth_address: str, output_path: Path
 ) -> Path:
     """Create a fake MetaMask Chrome extension local storage directory."""
-    ext_id = EXTENSION_IDS["metamask_chrome"]
+    ext_id = EXTENSION_IDS["metamask"]
     ext_dir = output_path / "metamask" / ext_id
 
     ext_dir.mkdir(parents=True, exist_ok=True)
@@ -184,7 +186,7 @@ def create_phantom_decoy(
     sol_address: str, output_path: Path
 ) -> Path:
     """Create a fake Phantom Chrome extension local storage directory."""
-    ext_id = EXTENSION_IDS["phantom_chrome"]
+    ext_id = EXTENSION_IDS["phantom"]
     ext_dir = output_path / "phantom" / ext_id
 
     ext_dir.mkdir(parents=True, exist_ok=True)
@@ -264,35 +266,67 @@ def create_electrum_decoy(
 
 def get_default_paths() -> dict[str, dict[str, str]]:
     """Return default browser extension decoy placement paths."""
-    mm_id = EXTENSION_IDS["metamask_chrome"]
-    ph_id = EXTENSION_IDS["phantom_chrome"]
+    mm_id = EXTENSION_IDS["metamask"]
+    ph_id = EXTENSION_IDS["phantom"]
 
-    chrome_ext_linux = "~/.config/google-chrome/Default/Local Extension Settings"
-    chrome_ext_win = (
-        "%LOCALAPPDATA%\\Google\\Chrome\\User Data"
+    # Chrome
+    chrome_linux = "~/.config/google-chrome/Default/Local Extension Settings"
+    chrome_win = (
+        "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default"
+        "\\Local Extension Settings"
+    )
+    chrome_mac = (
+        "~/Library/Application Support/Google/Chrome/Default"
+        "/Local Extension Settings"
+    )
+
+    # Brave
+    brave_linux = "~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings"
+    brave_win = (
+        "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data"
         "\\Default\\Local Extension Settings"
     )
-    chrome_ext_mac = (
-        "~/Library/Application Support/Google/Chrome"
+    brave_mac = (
+        "~/Library/Application Support/BraveSoftware/Brave-Browser"
         "/Default/Local Extension Settings"
+    )
+
+    # Microsoft Edge
+    edge_win = (
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Default"
+        "\\Local Extension Settings"
+    )
+    edge_mac = (
+        "~/Library/Application Support/Microsoft Edge/Default"
+        "/Local Extension Settings"
     )
 
     return {
         "linux": {
-            "metamask_chrome": f"{chrome_ext_linux}/{mm_id}/",
-            "phantom_chrome": f"{chrome_ext_linux}/{ph_id}/",
+            "metamask_chrome": f"{chrome_linux}/{mm_id}/",
+            "phantom_chrome": f"{chrome_linux}/{ph_id}/",
+            "metamask_brave": f"{brave_linux}/{mm_id}/",
+            "phantom_brave": f"{brave_linux}/{ph_id}/",
             "exodus": "~/.config/Exodus/exodus.wallet/",
             "electrum": "~/.electrum/wallets/",
         },
         "windows": {
-            "metamask_chrome": f"{chrome_ext_win}\\{mm_id}\\",
-            "phantom_chrome": f"{chrome_ext_win}\\{ph_id}\\",
+            "metamask_chrome": f"{chrome_win}\\{mm_id}\\",
+            "phantom_chrome": f"{chrome_win}\\{ph_id}\\",
+            "metamask_brave": f"{brave_win}\\{mm_id}\\",
+            "phantom_brave": f"{brave_win}\\{ph_id}\\",
+            "metamask_edge": f"{edge_win}\\{mm_id}\\",
+            "phantom_edge": f"{edge_win}\\{ph_id}\\",
             "exodus": "%APPDATA%\\Exodus\\exodus.wallet\\",
             "electrum": "%APPDATA%\\Electrum\\wallets\\",
         },
         "macos": {
-            "metamask_chrome": f"{chrome_ext_mac}/{mm_id}/",
-            "phantom_chrome": f"{chrome_ext_mac}/{ph_id}/",
+            "metamask_chrome": f"{chrome_mac}/{mm_id}/",
+            "phantom_chrome": f"{chrome_mac}/{ph_id}/",
+            "metamask_brave": f"{brave_mac}/{mm_id}/",
+            "phantom_brave": f"{brave_mac}/{ph_id}/",
+            "metamask_edge": f"{edge_mac}/{mm_id}/",
+            "phantom_edge": f"{edge_mac}/{ph_id}/",
             "exodus": "~/Library/Application Support/Exodus/exodus.wallet/",
             "electrum": "~/.electrum/wallets/",
         },
