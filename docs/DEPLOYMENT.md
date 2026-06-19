@@ -8,6 +8,7 @@ This document provides detailed requirements and step-by-step instructions for d
 3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
+    - [Containerized Deployment (Docker)](#containerized-deployment-docker)
 4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
 5. [Deployment Verification](#deployment-verification)
 
@@ -18,9 +19,18 @@ This document provides detailed requirements and step-by-step instructions for d
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Connectivity:**
+    - Port 1514 (TCP/UDP) for event communication.
+    - Port 1515 (TCP) for agent enrollment.
+
+### Hardware Recommendations (Wazuh Manager)
+For SMB environments, we recommend:
+- **Raspberry Pi 4 (8GB)** or **Raspberry Pi 5**.
+- High-endurance microSD card or USB 3.0 SSD (preferred).
 
 ### Endpoint Requirements
 #### Linux
+- **Supported Distributions:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
@@ -95,15 +105,40 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
 
+### Containerized Deployment (Docker)
+To monitor files within a Docker container using `auditd` and Wazuh:
+1. Run the Wazuh agent container with elevated privileges:
+   ```bash
+   docker run -d --name wazuh-agent \
+     --cap-add=AUDIT_CONTROL \
+     --pid=host \
+     -e WAZUH_MANAGER='YOUR_MANAGER_IP' \
+     -e NODE_NAME='YOUR_NODE_NAME' \
+     -v /var/run/docker.sock:/var/run/docker.sock \
+     -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
+     wazuh/wazuh-agent:latest
+   ```
+2. Ensure the honeypot artifacts are mounted or generated within a monitored volume.
+
 ---
 
 ## Honeypot Artifact Generation
 
-There are two ways to deploy honeypot artifacts: using the `honeypot-deployer` CLI (recommended) or using standalone deployment scripts.
+### Browser Extension Paths
+The system supports multiple browsers across different operating systems:
+
+| Browser | OS | Path Mapping |
+|---------|----|--------------|
+| **Chrome** | Linux | `~/.config/google-chrome/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\` |
+| **Brave** | Linux | `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\` |
+| **Edge** | Linux | `~/.config/microsoft-edge/Default/Local Extension Settings/` |
+| | Windows | `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\` |
+| **Firefox** | Linux | `~/.mozilla/firefox/*.default*/storage/default/` |
+| | Windows | `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\` |
 
 ### Option A: Using the CLI (Recommended)
-The CLI generates unique, randomized artifacts and tracks them in an encrypted manifest for high-fidelity monitoring and on-chain correlation.
-
 ```bash
 # 1. Install the tool
 pip install .
@@ -116,31 +151,13 @@ honeypot-deployer show --manifest ./my-artifacts/manifest.json
 ```
 
 ### Option B: Standalone Scripts
-For quick deployments without installing the Python package, you can use the provided shell and PowerShell scripts. These create a standard set of honeyfiles.
-
-**Linux:**
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-**Windows:**
-```powershell
-.\deploy.ps1
-```
-
-### Manifest Security
-The `manifest.json` contains the private keys for the generated honeypots. **Always keep this file secure.** It is recommended to use the `--encrypt-manifest` flag (enabled by default) to protect it with a password.
+**Linux:** `./deploy.sh`
+**Windows:** `.\deploy.ps1`
 
 ---
 
 ## Deployment Verification
 
-1. **Verify Artifacts:** Run the health check command:
-   ```bash
-   honeypot-deployer health-check --manifest ./my-artifacts/manifest.json
-   ```
-2. **Trigger a Test Alert:**
-   On a Linux agent: `cat ~/.bitcoin/wallet.dat`
-   On a Windows agent: `type %APPDATA%\Bitcoin\wallet.dat`
-3. **Check Wazuh Dashboard:** Confirm that a Level 12 (or higher) alert appears in the security events.
+1. **Verify Artifacts:** `honeypot-deployer health-check --manifest ./my-artifacts/manifest.json`
+2. **Trigger a Test Alert:** Access one of the honeyfiles (e.g., `cat ~/.bitcoin/wallet.dat`).
+3. **Check Wazuh Dashboard:** Confirm Level 12+ alerts appear in Security Events.
