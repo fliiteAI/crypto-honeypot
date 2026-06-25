@@ -15,12 +15,20 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## System Requirements
 
+### Hardware Recommendations
+- **Wazuh Manager:** Raspberry Pi 4 (8GB) or Raspberry Pi 5. Using a high-endurance microSD card or a USB 3.0 SSD is strongly recommended for SMB environments.
+- **Wazuh Agent:** Any standard workstation or server with at least 1GB RAM.
+
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Network Ports:**
+    - **1514 (TCP/UDP):** Agent event communication.
+    - **1515 (TCP):** Agent enrollment and registration.
 
 ### Endpoint Requirements
 #### Linux
+- **Distributions:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
@@ -30,6 +38,17 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+### Containerized Deployment (Docker)
+When running the Wazuh Agent inside a container, you must grant it elevated privileges to allow `auditd` monitoring:
+```bash
+docker run -d --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER="YOUR_MANAGER_IP" \
+  -e NODE_NAME="CONTAINER_NAME" \
+  wazuh/wazuh-agent:latest
+```
 
 ---
 
@@ -62,6 +81,24 @@ Configure the active response in your `ossec.conf` on the manager.
 ```bash
 systemctl restart wazuh-manager
 ```
+
+---
+
+## Browser Extension Path Mappings
+
+The honeypot decoys should be placed in the following directories to be discovered by infostealers:
+
+### Linux
+- **Chrome:** `~/.config/google-chrome/Default/Local Extension Settings/`
+- **Edge:** `~/.config/microsoft-edge/Default/Local Extension Settings/`
+- **Brave:** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/`
+- **Firefox:** `~/.mozilla/firefox/*.default*/storage/default/` (uses `moz-extension+++` naming convention)
+
+### Windows
+- **Chrome:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\`
+- **Edge:** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\`
+- **Brave:** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\`
+- **Firefox:** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\`
 
 ---
 
