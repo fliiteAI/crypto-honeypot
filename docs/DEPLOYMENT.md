@@ -4,12 +4,15 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Hardware Recommendations](#hardware-recommendations)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Containerized Deployment (Docker)](#containerized-deployment-docker)
+5. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -30,6 +33,16 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Hardware Recommendations
+
+For SMB environments, we recommend running the Wazuh Manager on dedicated hardware:
+
+- **Recommended Board:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+- **Storage:** High-endurance microSD card (e.g., SanDisk Max Endurance) or a USB 3.0 SSD (preferred for better I/O performance).
+- **Network:** Wired Gigabit Ethernet.
 
 ---
 
@@ -94,6 +107,44 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+### Containerized Deployment (Docker)
+
+To run the Wazuh agent in a Docker container with full honeypot monitoring capabilities:
+
+```bash
+docker run -d --name wazuh-agent \
+  -e WAZUH_MANAGER="manager-ip" \
+  -e WAZUH_AGENT_NAME="my-container-honeypot" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/ossec/etc:/var/ossec/etc \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  wazuh/wazuh-agent:latest
+```
+
+**Note:** `--cap-add=AUDIT_CONTROL` and `--pid=host` are required to allow the agent to interface with the host's `auditd` for `whodata` monitoring.
+
+---
+
+## Browser Extension Path Mappings
+
+The following paths are commonly used by browsers to store extension data. The honeypot artifacts should be deployed here to bait info-stealers.
+
+### Chrome / Chromium
+- **Linux:** `~/.config/google-chrome/Default/Local Extension Settings/`
+- **Windows:** `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Local Extension Settings\`
+
+### Microsoft Edge
+- **Windows:** `%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Local Extension Settings\`
+
+### Brave
+- **Linux:** `~/.config/BraveSoftware/Brave-Browser/Default/Local Extension Settings/`
+- **Windows:** `%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Local Extension Settings\`
+
+### Firefox
+- **Linux:** `~/.mozilla/firefox/*.default*/storage/default/`
+- **Firefox uses a different naming convention for extension data folders, typically starting with `moz-extension+++`.**
 
 ---
 
