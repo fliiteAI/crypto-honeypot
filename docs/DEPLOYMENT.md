@@ -4,20 +4,29 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Network Requirements](#network-requirements)
+3. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+4. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+    - [Browser Extension Paths](#browser-extension-paths)
+5. [Containerized Deployment (Docker)](#containerized-deployment-docker)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
 ## System Requirements
 
 ### Wazuh Infrastructure
-- **Wazuh Manager:** version 4.x or higher.
-- **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
+- **Wazuh Manager:** Version 4.x or higher.
+- **Wazuh Agent:** Version 4.x or higher installed on all target endpoints.
+
+#### Recommended Hardware (SMB/Home Lab)
+For small to medium environments, a dedicated Raspberry Pi is an excellent choice for the Wazuh Manager:
+- **Raspberry Pi 4 (8GB) or Raspberry Pi 5**.
+- **Storage:** High-endurance microSD card (minimum 32GB) or, preferably, a USB 3.0 SSD for better IOPS.
+- **OS:** Ubuntu 22.04 LTS (64-bit) or Raspberry Pi OS (64-bit).
 
 ### Endpoint Requirements
 #### Linux
@@ -30,6 +39,18 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Network Requirements
+
+Ensure the following ports are open on the Wazuh Manager to allow agent communication:
+
+| Port | Protocol | Description |
+|------|----------|-------------|
+| 1514 | TCP/UDP  | Agent event communication (required) |
+| 1515 | TCP      | Agent enrollment (required) |
+| 55000| TCP      | Wazuh API (optional, for management) |
 
 ---
 
@@ -94,6 +115,50 @@ Download and install [Sysmon](https://learn.microsoft.com/en-us/sysinternals/dow
 
 #### 2. Configure FIM
 Edit `C:\Program Files (x86)\ossec-agent\ossec.conf` and add the honeypot directories to the `<syscheck>` section.
+
+---
+
+## Browser Extension Paths
+
+Information-stealing malware specifically targets these paths. The `honeypot-deployer` places decoys in these locations:
+
+### Chrome-based (Chrome, Edge, Brave)
+- **Linux:** `~/.config/[browser-name]/Default/Local Extension Settings/[extension-id]`
+- **Windows:** `%LOCALAPPDATA%\[browser-name]\User Data\Default\Local Extension Settings\[extension-id]`
+
+### Firefox
+- **Linux:** `~/.mozilla/firefox/[profile].default/storage/default/moz-extension+++[extension-uuid]^userContextId=[id]`
+- **Windows:** `%APPDATA%\Mozilla\Firefox\Profiles\[profile].default\storage\default\moz-extension+++[extension-uuid]^userContextId=[id]`
+
+### Common Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
+
+---
+
+## Containerized Deployment (Docker)
+
+To run a Wazuh Agent within a Docker container while maintaining high-fidelity monitoring:
+
+### Docker Run Configuration
+You must grant the container specific capabilities to interact with the host's audit system:
+
+```bash
+docker run -d \
+  --name wazuh-agent \
+  --cap-add=AUDIT_CONTROL \
+  --pid=host \
+  -e WAZUH_MANAGER='192.168.1.100' \
+  -e WAZUH_AGENT_NAME='my-container-agent' \
+  -v /home/user/honeypot:/honeypot:ro \
+  wazuh/wazuh-agent:latest
+```
+
+**Key Parameters:**
+- `--cap-add=AUDIT_CONTROL`: Allows the agent to manage audit rules.
+- `--pid=host`: Required for the agent to correctly attribute process names to file access events.
+- `-v /path/to/honeypot:/path/to/monitored/dir:ro`: Mount your honeypot artifacts into the container.
 
 ---
 
