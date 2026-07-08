@@ -4,12 +4,14 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ## Table of Contents
 1. [System Requirements](#system-requirements)
-2. [Wazuh Manager Configuration](#wazuh-manager-configuration)
-3. [Wazuh Agent Configuration](#wazuh-agent-configuration)
+2. [Networking Requirements](#networking-requirements)
+3. [Browser Extension Path Mappings](#browser-extension-path-mappings)
+4. [Wazuh Manager Configuration](#wazuh-manager-configuration)
+5. [Wazuh Agent Configuration](#wazuh-agent-configuration)
     - [Linux Setup](#linux-setup)
     - [Windows Setup](#windows-setup)
-4. [Honeypot Artifact Generation](#honeypot-artifact-generation)
-5. [Deployment Verification](#deployment-verification)
+6. [Honeypot Artifact Generation](#honeypot-artifact-generation)
+7. [Deployment Verification](#deployment-verification)
 
 ---
 
@@ -17,10 +19,13 @@ This document provides detailed requirements and step-by-step instructions for d
 
 ### Wazuh Infrastructure
 - **Wazuh Manager:** version 4.x or higher.
+- **Hardware Recommendation:** Raspberry Pi 4 (8GB) or Raspberry Pi 5.
+  - High-endurance microSD card or USB 3.0 SSD (preferred).
 - **Wazuh Agent:** version 4.x or higher installed on all target endpoints.
 
 ### Endpoint Requirements
 #### Linux
+- **Supported Distributions:** Ubuntu 20.04+, Debian 11+, RHEL/AlmaLinux 8+.
 - **Python:** 3.10+ (required for running the `honeypot-deployer` CLI).
 - **Packages:** `auditd` (essential for `whodata` FIM support and user attribution).
 - **Permissions:** Root/sudo access for installing audit rules and modifying Wazuh configuration.
@@ -30,6 +35,37 @@ This document provides detailed requirements and step-by-step instructions for d
 - **PowerShell:** 5.1 or higher.
 - **Sysmon:** Recommended for enhanced process-level visibility.
 - **Permissions:** Administrator privileges for modifying Wazuh configuration and deploying artifacts.
+
+---
+
+## Networking Requirements
+
+The following ports must be open on the **Wazuh Manager** to allow communication with the agents:
+
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| 1514 | TCP/UDP | Agent event communication |
+| 1515 | TCP | Agent enrollment |
+| 55000 | TCP | Wazuh API |
+
+---
+
+## Browser Extension Path Mappings
+
+Honeypot decoys are placed in the following default paths to target info-stealer malware.
+
+### Chrome-based Browsers (Chrome, Edge, Brave)
+- **Linux:** `~/.config/<browser>/Default/Local Extension Settings/<extension_id>/`
+- **Windows:** `%LOCALAPPDATA%\<browser>\User Data\Default\Local Extension Settings\<extension_id>\`
+
+### Firefox
+- **Linux:** `~/.mozilla/firefox/*.default*/storage/default/moz-extension+++<extension_id>/`
+- **Windows:** `%APPDATA%\Mozilla\Firefox\Profiles\*.default*\storage\default\moz-extension+++<extension_id>\`
+
+### Monitored Extension IDs
+- **MetaMask:** `nkbihfbeogaeaoehlefnkodbefgpgknn`
+- **Phantom:** `bfnaelmomeimhlpmgjnjophhpkkoljpa`
+- **Coinbase Wallet:** `hnfanknocfeofbddgcijnmhnfnkdnaad`
 
 ---
 
